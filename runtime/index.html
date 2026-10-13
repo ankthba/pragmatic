@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The runtime · Pragmatic</title>
+
+    <meta name="description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta name="author" content="Aniketh Bandlamudi">
+
+    <meta property="og:title" content="The runtime · Pragmatic">
+    <meta property="og:description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
+    <link rel="canonical" href="https://aniketh.net/pragmatic/runtime/">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+
+    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+</head>
+<body>
+
+    <header>
+        <a href="/pragmatic/" class="masthead">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+            <span>Pragmatic</span>
+        </a>
+        <nav>
+            <a class="active" href="/pragmatic/runtime/">The runtime</a>
+            <a href="/pragmatic/docs/">Docs</a>
+            <a href="/pragmatic/practice/">In practice</a>
+            <a href="/pragmatic/newsroom/">Newsroom</a>
+            <a href="/pragmatic/questions/">Questions</a>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
+        </nav>
+    </header>
+
+    <!-- Page cover -->
+    <section class="page-cover">
+        <h1>The <em>runtime.</em></h1>
+        <p class="page-deck">One wrapper in your code, a journal underneath it, and replay that is exact, every time.</p>
+    </section>
+
+    <section class="dark-section atelier" id="code">
+        <div class="running-head"><em>In your code</em></div>
+        <h2>Durable in <em>one wrapper.</em></h2>
+        <p class="at-copy">Keep writing agents the way you already do. Wrap the run, route model turns through the Oracle, run tools as journaled effects, and Pragmatic records every realized outcome as the agent executes.</p>
+        <p class="at-note">Crash on step nine of a thousand and the agent resumes on step nine, reading every prior call back from the Journal instead of paying for it again.</p>
+        <div class="code-wrap">
+            <div class="lang-tabs">
+                <button class="lang-tab active" data-lang="rust">Rust</button>
+                <button class="lang-tab" data-lang="python">Python</button>
+            </div>
+            <div class="code-snippet active" data-lang="rust">
+                <p class="file">tool_loop.rs</p>
+<pre><span class="c-kw">use</span> pragmatic::{Runtime, Ctx, Fault, Value};
+<span class="c-kw">use</span> pragmatic_anthropic::{Conversation, Turn};
+
+<span class="c-com">// A real tool-use agent. Every model turn and tool call is journaled once.</span>
+<span class="c-com">#[pragmatic::durable]</span>
+<span class="c-kw">fn</span> agent(ctx: &amp;<span class="c-kw">mut</span> Ctx) -&gt; Result&lt;Value, Fault&gt; {
+    <span class="c-kw">let mut</span> conv = Conversation::user(<span class="c-str">"What is 481 * 1063?"</span>);
+    <span class="c-kw">loop</span> {
+        <span class="c-kw">let</span> turn = Turn::parse(&amp;ctx.oracle(conv.prompt())?)?;  <span class="c-com">// journaled</span>
+        conv.push_assistant(&amp;turn);
+        <span class="c-kw">if</span> !turn.wants_tools() {
+            <span class="c-kw">return</span> Ok(Value::from(turn.text()));
+        }
+        <span class="c-kw">for</span> call <span class="c-kw">in</span> turn.tool_uses() {
+            <span class="c-kw">let</span> out = ctx.effect(<span class="c-str">"calculator"</span>, &amp;call.input, calculator)?; <span class="c-com">// write-ahead</span>
+            conv.push_tool_result(&amp;call.id, out);
+        }
+    }
+}
+
+<span class="c-kw">let mut</span> rt = Runtime::in_memory(oracle);  <span class="c-com">// oracle declares the tools</span>
+<span class="c-kw">let</span> answer = rt.run(<span class="c-str">"agent-7"</span>, agent).unwrap();
+
+<span class="c-com">// Crash anywhere in the loop. Resume exactly; no tool runs twice.</span>
+<span class="c-kw">let</span> resumed = rt.resume(<span class="c-str">"agent-7"</span>, agent).unwrap();
+
+<span class="c-com">// Replay the whole run, bit for bit, with zero model calls.</span>
+<span class="c-kw">let</span> audit = rt.replay(<span class="c-str">"agent-7"</span>, agent).unwrap();</pre>
+            </div>
+            <div class="code-snippet" data-lang="python">
+                <p class="file">research_agent.py</p>
+<pre><span class="c-kw">import</span> pragmatic
+
+<span class="c-com"># Wrap the run. Every ctx.oracle call is journaled once.</span>
+<span class="c-kw">def</span> research(ctx):
+    plan = ctx.oracle(<span class="c-str">"plan the task"</span>)                     <span class="c-com"># journaled</span>
+    findings = [ctx.oracle(<span class="c-str">f"probe {i}: {plan}"</span>) <span class="c-kw">for</span> i <span class="c-kw">in</span> range(10)] <span class="c-com"># journaled</span>
+    <span class="c-kw">return</span> ctx.effect(<span class="c-str">"publish"</span>, <span class="c-str">f"{len(findings)} findings"</span>,
+                      <span class="c-kw">lambda</span> arg: <span class="c-str">f"s3://reports/{arg}"</span>)   <span class="c-com"># write-ahead journaled</span>
+
+rt = pragmatic.Runtime(<span class="c-str">"./journals"</span>, oracle)
+
+<span class="c-com"># Crash anywhere. Resume exactly, no re-sampling.</span>
+report = rt.resume(<span class="c-str">"research-42"</span>, research)
+
+<span class="c-com"># Replay the whole run for audit.</span>
+audit = rt.replay(<span class="c-str">"research-42"</span>, research)</pre>
+            </div>
+        </div>
+        <p class="at-note">Available in Rust and Python, with stable C++, Java, Go, and Node bindings. A first-class TypeScript SDK is next on the roadmap.</p>
+    </section>
+
+    <section class="spread">
+        <p class="statement"><em>A journal, not a cache.</em> <span>Other engines cache model outputs and trust you to keep the surrounding code deterministic. Pragmatic journals every step the agent takes, so resume and replay hold for the whole run.</span></p>
+    </section>
+
+    <section class="book" id="anatomy">
+        <div class="running-head"><em>Anatomy</em></div>
+        <h2 class="book-lede">A runtime, <em>not an operating system.</em></h2>
+        <div class="book-entry">
+            <span class="caption">The runtime</span>
+            <h3>A library, on your infrastructure.</h3>
+            <p class="prose">Pragmatic runs on the infrastructure you already have: Linux, containers, any cloud. It links into your agent as a library. There is nothing new to provision and no operating system to adopt.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">The core</span>
+            <h3>Oracle and Journal.</h3>
+            <p class="prose">Every model call goes through the Oracle, and every realized outcome is written to an append-only, hash-chained Journal. Replay reads outcomes back instead of calling the model again, which is what makes recovery exact.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">The tool loop</span>
+            <h3>Tools run exactly once.</h3>
+            <p class="prose">The Claude adapter journals the full multi-turn loop: the model asks for a tool, the tool executes as a write-ahead journaled effect, and the result goes back into the conversation. Each turn is recorded with its tool requests, stop reason, and token usage intact, so the Journal doubles as a cost record. Crash anywhere in the loop and the run resumes with no tool re-executed; replay reproduces the loop without calling the model at all.</p>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="f-inner">
+            <div class="f-cta">
+                <p class="f-line">Tell us what <em>you're building.</em></p>
+                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            </div>
+            <div class="f-rule"></div>
+            <div class="f-main">
+                <div class="f-brand">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </div>
+                <div class="f-cols">
+                    <div class="f-col">
+                        <span class="f-head">Explore</span>
+                        <a href="/pragmatic/">Overview</a>
+                        <a href="/pragmatic/runtime/">The runtime</a>
+                        <a href="/pragmatic/docs/">Docs</a>
+                        <a href="/pragmatic/practice/">In practice</a>
+                        <a href="/pragmatic/newsroom/">Newsroom</a>
+                        <a href="/pragmatic/questions/">Questions</a>
+                    </div>
+                    <div class="f-col">
+                        <span class="f-head">Connect</span>
+                        <a href="mailto:me@aniketh.net">Email</a>
+                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
+                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
+                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/pragmatic/pragmatic.js" defer></script>
+</body>
+</html>

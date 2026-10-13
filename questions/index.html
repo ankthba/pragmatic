@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions · Pragmatic</title>
+
+    <meta name="description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta name="author" content="Aniketh Bandlamudi">
+
+    <meta property="og:title" content="Questions · Pragmatic">
+    <meta property="og:description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
+    <link rel="canonical" href="https://aniketh.net/pragmatic/questions/">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+
+    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+</head>
+<body>
+
+    <header>
+        <a href="/pragmatic/" class="masthead">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+            <span>Pragmatic</span>
+        </a>
+        <nav>
+            <a href="/pragmatic/runtime/">The runtime</a>
+            <a href="/pragmatic/docs/">Docs</a>
+            <a href="/pragmatic/practice/">In practice</a>
+            <a href="/pragmatic/newsroom/">Newsroom</a>
+            <a class="active" href="/pragmatic/questions/">Questions</a>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
+        </nav>
+    </header>
+
+    <!-- Page cover -->
+    <section class="page-cover">
+        <h1>Asked, <em>answered.</em></h1>
+    </section>
+
+    <section class="qa" id="faq">
+        <details class="qa-item">
+            <summary>
+                <h3>How is this different from a general <em>durable execution engine?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">General durable execution treats a model call as an opaque step: run it once, store the output, replay the stored value. That works well, and Pragmatic builds on the same lineage. The difference is that those engines keep working only while you keep the surrounding code deterministic yourself. Pragmatic journals the model calls, the tool effects, and the clock, so resume and replay hold for the whole run without that discipline.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>How can replay be faithful if LLMs <em>are nondeterministic?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">Pragmatic does not re-sample the model on replay. The first run records each realized outcome to the Journal, and replay reads those outcomes back. Reproducing a run reads from the log rather than calling the model again, which is what makes it exact.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>Does it handle real <em>tool-use agents?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">Yes. The Claude adapter journals the full multi-turn loop: the model asks for a tool, the tool executes as a write-ahead journaled effect, and the result goes back into the conversation. Crash anywhere in the loop and the run resumes with every tool executed exactly once; replay reproduces the whole loop without calling the model at all. A wire test proves this end to end over real TCP sockets, down to the bytes on the wire. Plain prompts behave exactly as before, so existing journals still replay.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>Do I have to <em>rewrite my agent?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">No. Keep your agent logic and route model calls through the Oracle. The runtime links in as a library and journals outcomes as the agent runs. There is no new operating system and no new orchestration language to learn.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>Is it <em>production-ready?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">Pragmatic is pre-release. The Rust reference runtime passes its determinism and recovery suites today, including a full Claude tool-use loop recorded, resumed, and replayed over live sockets. Early access is open to design partners who want to run it against real workloads and shape what ships.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>Where does <em>my data live?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">On your own infrastructure. The runtime links into your agent as a library, and Journals are files on your own disk; nothing leaves your environment. A managed cloud backend is in development.</p>
+        </details>
+        <details class="qa-item">
+            <summary>
+                <h3>What does <em>it cost?</em></h3>
+                <span class="q-mark">+</span>
+            </summary>
+            <p class="answer prose">Pragmatic is source-available under the Business Source License 1.1. It is free for non-production use, and for production use by organizations under one million dollars in annual revenue. Production beyond that takes a commercial license: <a href="mailto:me@aniketh.net?subject=Pragmatic commercial license">email us</a>.</p>
+        </details>
+    </section>
+
+    <footer class="site-footer">
+        <div class="f-inner">
+            <div class="f-cta">
+                <p class="f-line">Tell us what <em>you're building.</em></p>
+                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            </div>
+            <div class="f-rule"></div>
+            <div class="f-main">
+                <div class="f-brand">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </div>
+                <div class="f-cols">
+                    <div class="f-col">
+                        <span class="f-head">Explore</span>
+                        <a href="/pragmatic/">Overview</a>
+                        <a href="/pragmatic/runtime/">The runtime</a>
+                        <a href="/pragmatic/docs/">Docs</a>
+                        <a href="/pragmatic/practice/">In practice</a>
+                        <a href="/pragmatic/newsroom/">Newsroom</a>
+                        <a href="/pragmatic/questions/">Questions</a>
+                    </div>
+                    <div class="f-col">
+                        <span class="f-head">Connect</span>
+                        <a href="mailto:me@aniketh.net">Email</a>
+                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
+                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
+                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/pragmatic/pragmatic.js" defer></script>
+</body>
+</html>

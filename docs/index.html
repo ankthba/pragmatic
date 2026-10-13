@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs · Pragmatic</title>
+
+    <meta name="description" content="How to get Pragmatic, what ships in the repository, and the terms it ships under. The repository stays the source of truth.">
+    <meta name="author" content="Aniketh Bandlamudi">
+
+    <meta property="og:title" content="Docs · Pragmatic">
+    <meta property="og:description" content="How to get Pragmatic, what ships in the repository, and the terms it ships under. The repository stays the source of truth.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
+    <link rel="canonical" href="https://aniketh.net/pragmatic/docs/">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+
+    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+</head>
+<body>
+
+    <header>
+        <a href="/pragmatic/" class="masthead">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+            <span>Pragmatic</span>
+        </a>
+        <nav>
+            <a href="/pragmatic/runtime/">The runtime</a>
+            <a class="active" href="/pragmatic/docs/">Docs</a>
+            <a href="/pragmatic/practice/">In practice</a>
+            <a href="/pragmatic/newsroom/">Newsroom</a>
+            <a href="/pragmatic/questions/">Questions</a>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
+        </nav>
+    </header>
+
+    <!-- Page cover -->
+    <section class="page-cover">
+        <h1>The <em>documentation.</em></h1>
+        <p class="page-deck">How to get Pragmatic, what ships in the repository, and how to use what exists today. If this site and the repository ever disagree, believe the repository.</p>
+        <nav class="doc-sub" aria-label="Documentation pages">
+            <a class="here" href="/pragmatic/docs/">Docs</a>
+            <a href="/pragmatic/docs/quickstart/">Quickstart</a>
+        </nav>
+    </section>
+
+    <section class="dark-section atelier" id="get">
+        <div class="running-head"><em>Get it</em></div>
+        <h2>Clone it, <em>run it.</em></h2>
+        <p class="at-copy">Pragmatic is in public beta and the source is public. The core example runs without a model or an API key; the tool-loop example records a real Claude agent end to end, then resumes and replays it.</p>
+        <div class="code-wrap">
+            <div class="code-snippet active" data-lang="shell">
+                <p class="file">your terminal</p>
+<pre><span class="c-com"># the source, on GitHub</span>
+git clone https://github.com/pragmaticco/pragmaticMain
+
+<span class="c-com"># the runtime, no model and no key required</span>
+cargo run -p pragmatic --example research_agent
+
+<span class="c-com"># a real Claude tool-use agent, durable end to end</span>
+ANTHROPIC_API_KEY=... cargo run -p pragmatic-anthropic --example tool_loop
+
+<span class="c-com"># the same runtime from Python</span>
+pip install pragmatic-runtime</pre>
+            </div>
+        </div>
+        <p class="at-note">The repository carries the full usage guide and every example: <a href="https://github.com/pragmaticco/pragmaticMain" target="_blank" rel="noopener">github.com/pragmaticco/pragmaticMain</a>.</p>
+    </section>
+
+    <section class="book" id="ships">
+        <div class="running-head"><em>What ships</em></div>
+        <div class="book-entry">
+            <span class="caption">The core</span>
+            <h3>The runtime.</h3>
+            <p class="prose">The <code>pragmatic</code> crate, sync and async, with zero dependencies. It links into the agent you already run and journals every model call and tool effect to an append-only, hash-chained log; there is nothing to provision.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Model adapters</span>
+            <h3>Claude and OpenAI-compatible models.</h3>
+            <p class="prose">Claude as a journaled Oracle, from plain completions to full Messages API tool-use loops. The OpenAI adapter speaks to any OpenAI-compatible server: OpenAI, Ollama, vLLM. Or implement the Oracle trait for any model client of your own.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">The console</span>
+            <h3>The CLI and replay console.</h3>
+            <p class="prose">Five commands over your journal directory: runs, show, verify, export, serve. Serve a live console over your journals, or export one run as a self-contained HTML file. Loopback-only by default, since journals contain prompts and outputs.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Other languages</span>
+            <h3>Python, and more.</h3>
+            <p class="prose">The same runtime from Python via pip install pragmatic-runtime, with journals byte-compatible with Rust and the CLI. C++, Java, Go, and Node bindings sit behind one C ABI.</p>
+        </div>
+    </section>
+
+    <section id="terms">
+        <div class="running-head"><em>The terms</em></div>
+        <div class="look">
+            <h3>Source-available, <em>not locked up.</em></h3>
+            <p class="prose">Pragmatic is licensed under the Business Source License 1.1: read it, modify it, self-host it. Each released version converts to Apache 2.0 four years after release, so nothing stays closed forever.</p>
+        </div>
+        <div class="look">
+            <h3>Free <em>while you build.</em></h3>
+            <p class="prose">Free for non-production use, and for production use by organizations under one million dollars in annual revenue. Production beyond that takes a commercial license: <a href="mailto:me@aniketh.net?subject=Pragmatic commercial license">email us</a>.</p>
+        </div>
+        <div class="look">
+            <h3>Scope, <em>stated honestly.</em></h3>
+            <p class="prose">Journals are single-process on local disk today, and the managed cloud backend is still in development. The replay guarantee is exercised by the runtime's determinism and recovery suites, including a full tool-use loop crashed and resumed over live sockets.</p>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="f-inner">
+            <div class="f-cta">
+                <p class="f-line">Tell us what <em>you're building.</em></p>
+                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            </div>
+            <div class="f-rule"></div>
+            <div class="f-main">
+                <div class="f-brand">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </div>
+                <div class="f-cols">
+                    <div class="f-col">
+                        <span class="f-head">Explore</span>
+                        <a href="/pragmatic/">Overview</a>
+                        <a href="/pragmatic/runtime/">The runtime</a>
+                        <a href="/pragmatic/docs/">Docs</a>
+                        <a href="/pragmatic/practice/">In practice</a>
+                        <a href="/pragmatic/newsroom/">Newsroom</a>
+                        <a href="/pragmatic/questions/">Questions</a>
+                    </div>
+                    <div class="f-col">
+                        <span class="f-head">Connect</span>
+                        <a href="mailto:me@aniketh.net">Email</a>
+                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
+                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
+                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/pragmatic/pragmatic.js" defer></script>
+</body>
+</html>

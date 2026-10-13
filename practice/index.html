@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In practice · Pragmatic</title>
+
+    <meta name="description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta name="author" content="Aniketh Bandlamudi">
+
+    <meta property="og:title" content="In practice · Pragmatic">
+    <meta property="og:description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
+    <link rel="canonical" href="https://aniketh.net/pragmatic/practice/">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+
+    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+</head>
+<body>
+
+    <header>
+        <a href="/pragmatic/" class="masthead">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+            <span>Pragmatic</span>
+        </a>
+        <nav>
+            <a href="/pragmatic/runtime/">The runtime</a>
+            <a href="/pragmatic/docs/">Docs</a>
+            <a class="active" href="/pragmatic/practice/">In practice</a>
+            <a href="/pragmatic/newsroom/">Newsroom</a>
+            <a href="/pragmatic/questions/">Questions</a>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
+        </nav>
+    </header>
+
+    <!-- Page cover -->
+    <section class="page-cover">
+        <h1>In <em>practice.</em></h1>
+        <p class="page-deck">What you build on Pragmatic, and how it runs today.</p>
+    </section>
+
+    <section id="uses">
+        <div class="running-head"><em>What you build on it</em></div>
+        <div class="look">
+            <h3>Agents that run <em>for days.</em></h3>
+            <p class="prose">Long-running agents survive process restarts, deploys, and infrastructure failures, then resume exactly where they stopped. A run that dies nine hundred steps in does not re-bill nine hundred model calls; it picks up at step nine hundred and one, with every tool executed exactly once.</p>
+        </div>
+        <div class="look">
+            <h3>Bugs you can <em>finally replay.</em></h3>
+            <p class="prose">Reproduce the exact run that failed, step by step, including the nondeterministic model behavior that caused it. Bugs you could never reproduce become runs you can replay.</p>
+        </div>
+        <div class="look">
+            <h3>Runs you can <em>prove.</em></h3>
+            <p class="prose">Every run has a replayable, tamper-evident record of what the agent actually did: every model turn, every tool call, and what each cost in tokens, signed when a runtime key is configured. When an auditor asks what the agent did, the answer is the Journal.</p>
+        </div>
+    </section>
+
+    <section class="spread">
+        <p class="statement"><em>Self-hosted, today.</em> <span>The runtime links into your agent as a library, and your Journals stay on your own disk, in your own environment. A managed cloud backend with a hosted replay console is in development.</span></p>
+    </section>
+
+    <footer class="site-footer">
+        <div class="f-inner">
+            <div class="f-cta">
+                <p class="f-line">Tell us what <em>you're building.</em></p>
+                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            </div>
+            <div class="f-rule"></div>
+            <div class="f-main">
+                <div class="f-brand">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </div>
+                <div class="f-cols">
+                    <div class="f-col">
+                        <span class="f-head">Explore</span>
+                        <a href="/pragmatic/">Overview</a>
+                        <a href="/pragmatic/runtime/">The runtime</a>
+                        <a href="/pragmatic/docs/">Docs</a>
+                        <a href="/pragmatic/practice/">In practice</a>
+                        <a href="/pragmatic/newsroom/">Newsroom</a>
+                        <a href="/pragmatic/questions/">Questions</a>
+                    </div>
+                    <div class="f-col">
+                        <span class="f-head">Connect</span>
+                        <a href="mailto:me@aniketh.net">Email</a>
+                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
+                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
+                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/pragmatic/pragmatic.js" defer></script>
+</body>
+</html>

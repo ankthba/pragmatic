@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pragmatic</title>
+
+    <meta name="description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta name="author" content="Aniketh Bandlamudi">
+
+    <meta property="og:title" content="Pragmatic">
+    <meta property="og:description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
+    <link rel="canonical" href="https://aniketh.net/pragmatic/">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+
+    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+</head>
+<body>
+
+    <header>
+        <a href="/pragmatic/" class="masthead">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+            <span>Pragmatic</span>
+        </a>
+        <nav>
+            <a href="/pragmatic/runtime/">The runtime</a>
+            <a href="/pragmatic/docs/">Docs</a>
+            <a href="/pragmatic/practice/">In practice</a>
+            <a href="/pragmatic/newsroom/">Newsroom</a>
+            <a href="/pragmatic/questions/">Questions</a>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
+        </nav>
+    </header>
+
+    <section class="cover">
+        <div class="cover-grid">
+            <div class="cover-copy">
+                <h1>Durable execution for agents that <em>don't run deterministically.</em></h1>
+                <p class="cover-deck">A Rust runtime that journals every step an agent takes, so it survives any crash and replays exactly, nondeterministic model behavior included.</p>
+                <div class="cover-links">
+                    <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+                    <a class="lnk" href="/pragmatic/runtime/">Read on</a>
+                </div>
+            </div>
+            <div class="cover-journal" aria-hidden="true">
+                <div class="cj-head">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>journal &middot; agent-42</span>
+                </div>
+                <div class="cj-lines"></div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="index">
+        <div class="running-head"><em>By the numbers</em></div>
+        <div class="index-inner">
+            <div class="index-row">
+                <span class="t">Replay determinism, reference suite</span>
+                <span class="dots"></span>
+                <span class="v">1000 of 1000</span>
+            </div>
+            <div class="index-row">
+                <span class="t">Journal append, flat to a million entries</span>
+                <span class="dots"></span>
+                <span class="v">~230 ns</span>
+            </div>
+            <div class="index-row">
+                <span class="t">Tool executions across crash, resume, and replay</span>
+                <span class="dots"></span>
+                <span class="v">Exactly one</span>
+            </div>
+            <div class="index-row">
+                <span class="t">Dependencies in the Rust core</span>
+                <span class="dots"></span>
+                <span class="v">None</span>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="spread">
+        <p class="statement"><em>Durable execution made software reliable.</em> <span>But its replay model assumes determinism, and LLM agents are not deterministic. Everyone else caches around that. Pragmatic models it.</span></p>
+    </section>
+
+
+    <section id="runtime">
+        <div class="running-head"><em>Three guarantees, every run</em></div>
+        <div class="look">
+            <h3>Journal <em>every step.</em></h3>
+            <p class="prose">Each model turn's realized outcome is recorded to an append-only log as the run proceeds, tool calls and token usage included. The journal is the source of truth for what the agent actually did, not a reconstruction after the fact.</p>
+        </div>
+        <div class="look">
+            <h3>Recover <em>from any crash.</em></h3>
+            <p class="prose">Resume exactly where the agent stopped. Recorded outcomes are read back instead of re-sampled, so there are no duplicate model calls, no re-executed tools, and no lost work after a failure.</p>
+        </div>
+        <div class="look">
+            <h3>Replay <em>faithfully.</em></h3>
+            <p class="prose">Reproduce the entire run exactly for debugging and audit, nondeterministic LLM behavior included. Replaying the journal reproduces the original trace, exactly, every time.</p>
+        </div>
+    </section>
+
+    <section class="finale">
+        <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+        <h2>Crash. Recover.<br><em>Replay, exactly.</em></h2>
+        <p class="aside">Tell us what you're building.</p>
+        <div class="finale-links">
+            <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Talk to us</a>
+        </div>
+    </section>
+
+
+    <footer class="site-footer">
+        <div class="f-inner">
+            <div class="f-cta">
+                <p class="f-line">Tell us what <em>you're building.</em></p>
+                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+            </div>
+            <div class="f-rule"></div>
+            <div class="f-main">
+                <div class="f-brand">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </div>
+                <div class="f-cols">
+                    <div class="f-col">
+                        <span class="f-head">Explore</span>
+                        <a href="/pragmatic/">Overview</a>
+                        <a href="/pragmatic/runtime/">The runtime</a>
+                        <a href="/pragmatic/docs/">Docs</a>
+                        <a href="/pragmatic/practice/">In practice</a>
+                        <a href="/pragmatic/newsroom/">Newsroom</a>
+                        <a href="/pragmatic/questions/">Questions</a>
+                    </div>
+                    <div class="f-col">
+                        <span class="f-head">Connect</span>
+                        <a href="mailto:me@aniketh.net">Email</a>
+                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
+                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
+                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
+                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/pragmatic/pragmatic.js" defer></script>
+</body>
+</html>
