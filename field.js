@@ -323,6 +323,7 @@
         // it, and the last row keeps at least half a pitch from the edge
         // below. A band is divided into a whole number of rows near the
         // pitch, so that both of its edges fall halfway between two rows.
+        foot = Math.round(foot * 2) / 2;
         var cuts = [0, foot];
         bands.forEach(function (b) { cuts.push(b[1], b[3]); });
         cuts = cuts.map(function (v) { return Math.round(v * 2) / 2; })
