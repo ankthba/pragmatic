@@ -164,15 +164,15 @@
     var under = new Set();        // dark parts anywhere beneath the glass
     var acrossTop = new Set();    // bands across its top edge
     var acrossFoot = new Set();   // bands across its foot
+    var acrossMid = new Set();    // bands across its middle
 
     var show = function () {
+        // Dark from the moment a dark band reaches the middle of the
+        // glass, paper otherwise: one clean switch, no flash between.
         var glass = 'clear';
         if (moved) {
             glass = 'paper';
-            under.forEach(function (el) {
-                if (glass === 'thick') return;
-                glass = isBand.has(el) && acrossTop.has(el) && acrossFoot.has(el) ? 'dark' : 'thick';
-            });
+            acrossMid.forEach(function (el) { if (isBand.has(el)) glass = 'dark'; });
         }
         if (header.getAttribute('data-glass') !== glass) header.setAttribute('data-glass', glass);
     };
@@ -204,9 +204,12 @@
         under.clear();
         acrossTop.clear();
         acrossFoot.clear();
+        acrossMid.clear();
         watchStrip(under, bands.concat(spots), 0, bar, height);
         watchStrip(acrossTop, bands, 0, 1, height);
         watchStrip(acrossFoot, bands, bar - 1, bar, height);
+        var mid = Math.round(bar / 2);
+        watchStrip(acrossMid, bands, mid - 1, mid, height);
     };
     watch();
 
