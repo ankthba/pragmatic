@@ -3,157 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pragmatic</title>
+    <title>Pragmatic · The system of record for AI agents</title>
 
-    <meta name="description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta name="description" content="Pragmatic is the system of record for AI agents: a tamper-evident journal of every model call and tool call made through Pragmatic, exact replay without calling the model, crash recovery, and, in preview for 0.6, evidence an auditor can verify offline.">
     <meta name="author" content="Aniketh Bandlamudi">
 
-    <meta property="og:title" content="Pragmatic">
-    <meta property="og:description" content="Crash recovery and faithful replay for nondeterministic LLM agents, in Rust. The durable execution runtime for AI agents in production.">
+    <meta property="og:title" content="Pragmatic · The system of record for AI agents">
+    <meta property="og:description" content="Pragmatic is the system of record for AI agents: a tamper-evident journal of every model call and tool call made through Pragmatic, exact replay without calling the model, crash recovery, and, in preview for 0.6, evidence an auditor can verify offline.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
     <link rel="canonical" href="https://aniketh.net/pragmatic/">
 
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://aniketh.net/pragmatic/#organization",
+                "name": "Pragmatic Research, Inc.",
+                "url": "https://aniketh.net/pragmatic/",
+                "logo": "https://aniketh.net/pragmatic/assets/pragmaticicon.png",
+                "email": "me@aniketh.net",
+                "sameAs": [
+                    "https://github.com/pragmaticco",
+                    "https://www.linkedin.com/company/pragmaticco",
+                    "https://x.com/pragmaticsys",
+                    "https://www.instagram.com/pragmaticsystems"
+                ]
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "Pragmatic",
+                "url": "https://aniketh.net/pragmatic/",
+                "applicationCategory": "DeveloperApplication",
+                "description": "The system of record for AI agents: a tamper-evident journal of every model call, tool call, input and clock read an agent makes through Pragmatic, exact replay without calling the model, crash recovery that resumes a run without repeating finished work, and, in preview for 0.6, evidence an auditor can verify offline.",
+                "publisher": { "@id": "https://aniketh.net/pragmatic/#organization" }
+            }
+        ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@0;1&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/pragmatic/pragmatic.css">
+    <noscript><style>.pc-cap .v-live { display: none; } .pc-cap .v-still { display: inline; }</style></noscript>
 
-    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+    <link rel="icon" type="image/png" sizes="180x180" href="/pragmatic/assets/pragmaticfavicon.png">
+    <link rel="icon" type="image/svg+xml" href="/pragmatic/assets/pragmatic.svg">
+    <link rel="apple-touch-icon" href="/pragmatic/assets/pragmaticfavicon.png">
+    <meta name="theme-color" content="#f2efe6">
 </head>
 <body>
+
+    <a class="skip" href="#main">Skip to content</a>
 
     <header>
         <a href="/pragmatic/" class="masthead">
             <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
             <span>Pragmatic</span>
         </a>
-        <nav>
-            <a href="/pragmatic/runtime/">The runtime</a>
-            <a href="/pragmatic/docs/">Docs</a>
-            <a href="/pragmatic/practice/">In practice</a>
-            <a href="/pragmatic/newsroom/">Newsroom</a>
-            <a href="/pragmatic/questions/">Questions</a>
-            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
-        </nav>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-menu"><span>Menu</span></button>
+        <div class="menu" id="site-menu">
+            <div class="menu-top">
+                <a href="/pragmatic/" class="masthead">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </a>
+                <button class="menu-btn menu-close" type="button"><span>Close</span></button>
+            </div>
+            <nav aria-label="Main">
+                <a href="/pragmatic/runtime/">How it works</a>
+                <a href="/pragmatic/practice/">In practice</a>
+                <a href="/pragmatic/docs/">Docs</a>
+                <a href="/pragmatic/questions/">Questions</a>
+                <a href="/pragmatic/newsroom/">Newsroom</a>
+            </nav>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Design partners</a>
+        </div>
     </header>
+
+    <main id="main" tabindex="-1">
 
     <section class="cover">
         <div class="cover-grid">
             <div class="cover-copy">
-                <h1>Durable execution for agents that <em>don't run deterministically.</em></h1>
-                <p class="cover-deck">A Rust runtime that journals every step an agent takes, so it survives any crash and replays exactly, nondeterministic model behavior included.</p>
+                <h1>The <span class="nb">system of record</span> <em>for AI agents.</em></h1>
+                <p class="cover-deck">Every model call and tool call your agent makes through Pragmatic is written to a tamper-evident journal before the agent sees the result. A crashed run resumes without repeating finished work, and any run replays exactly, without calling the model.</p>
                 <div class="cover-links">
-                    <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
-                    <a class="lnk" href="/pragmatic/runtime/">Read on</a>
+                    <a class="lnk primary" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Become a design partner</a>
+                    <a class="lnk" href="/pragmatic/runtime/">See how it works</a>
                 </div>
+                <p class="cover-status">0.5, open source, is about to be released. Evidence for auditors and <span class="nw">Pragmatic Server</span> are in <span class="nw">design-partner preview</span> for 0.6.</p>
             </div>
-            <div class="cover-journal" aria-hidden="true">
-                <div class="cj-head">
-                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
-                    <span>journal &middot; agent-42</span>
+
+            <!-- Part of a page in Pragmatic Server's console (in preview for
+                 0.6), signed in as an auditor: the run refund-20417 as it
+                 ended. The run was recorded on 14 Oct 2026 (UTC) by a sample
+                 refund agent with a scripted model and scripted tools, and
+                 anchored by two timestamp services, DigiCert and Sectigo.
+                 Every word, id, time and hash below is copied from the
+                 console's own page for that run, /console/runs/refund-20417,
+                 and the caption says it is from that page. Shown, at a
+                 reduced scale: the title block; entries #2 to #9 and #11 to
+                 #14 (the run's steps, the crash, the resume and its end); the
+                 chain foot; the Anchoring card; and four lines of the
+                 Evidence check card (journal, head, chain and result). Left
+                 out: entries #0 and #1 (run started), #10 and #15 (the
+                 server's custody notes), the Evidence check card's other
+                 lines, which all read none or 0, its timestamp and its
+                 footer, and the Run card. Where #10 is left out, the rail is
+                 dotted, with the dots the console draws for its "After the
+                 run" group, so the gap in the numbers shows.
+                 pragmatic.js only plays it back: a playhead reads the
+                 finished page in the order the run was written, while a
+                 camera moves over it, close on the run and then out to the
+                 whole page with its two cards. -->
+            <figure class="replay">
+                <div class="pc-stage" aria-hidden="true">
+                    <!-- The lens: the camera's frame. The sheet moves inside
+                         it; the cards stay outside it, in their places. -->
+                    <div class="pc-lens">
+                    <div class="pc pc-sheet">
+                        <div class="mast">
+                            <span class="brand"><svg class="mark" viewBox="0 0 100 100"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg><span>Pragmatic</span></span>
+                            <span class="crumbs"><span class="c up"><i class="sep"></i><span>Runs</span></span><span class="c"><i class="sep"></i><span class="m">refund-20417</span></span></span>
+                        </div>
+
+                        <div class="sh-head">
+                            <p class="sh-title"><span class="rid">refund-20417</span><span class="badge"><i class="dm"></i>Verified</span></p>
+                            <p class="facts"><span class="nw">Format <span class="n">2</span></span><span class="dot">&middot;</span><wbr><span class="nw"><span class="n">16</span> entries</span><span class="dot">&middot;</span><wbr><span class="nw"><span class="n">2</span> attempts</span><span class="dot">&middot;</span><wbr><span class="nw"><span class="n">3</span> model calls</span><span class="dot">&middot;</span><wbr><span class="nw"><span class="n">2</span> tool calls</span></p>
+                            <p class="state">Ended ok<span class="dot">&middot;</span><wbr>recorded 14&nbsp;Oct 2026, <span class="m">04:23:34</span> to <span class="nw"><span class="m">04:24:48</span> UTC</span></p>
+                        </div>
+
+                        <div class="tl">
+                            <div class="pc-head"></div>
+                            <div class="grp">
+                                <p class="grp-label caps">Attempt 1 &middot; run &middot; pid 10295</p>
+                                <ol class="rows">
+                                    <li class="row mk-ring"><div class="sum"><p class="t">Model call <i class="ar"></i> <span class="m">lookup_order</span></p><span class="tm">04:23:34.106</span><span class="k">draw.intent&nbsp;#2&nbsp;&middot; draw.ok&nbsp;#3</span><span class="h">23790d6c14</span></div></li>
+                                    <li class="row mk-ring"><div class="sum"><p class="t">Tool call <span class="m">lookup_order</span> <span class="s">&middot;</span> <span class="m">charges &times;2, status delivered</span></p><span class="tm">04:23:35.030</span><span class="k">effect.intent&nbsp;#4&nbsp;&middot; effect.ok&nbsp;#5</span><span class="h">91af105717</span></div></li>
+                                    <li class="row mk-ring"><div class="sum"><p class="t">Model call <i class="ar"></i> <span class="m">issue_refund</span></p><span class="tm">04:23:35.197</span><span class="k">draw.intent&nbsp;#6&nbsp;&middot; draw.ok&nbsp;#7</span><span class="h">59836de047</span></div></li>
+                                    <li class="row mk-ring"><div class="sum"><p class="t">Tool call <span class="m">issue_refund</span> <span class="s">&middot;</span> <span class="m">refund_id re_3f9c, status succeeded</span></p><span class="tm">04:23:36.110</span><span class="k">effect.intent&nbsp;#8&nbsp;&middot; effect.ok&nbsp;#9</span><span class="h">bd6bab3351</span></div></li>
+                                    <li class="row mk-alarm-hollow crash derived"><div class="sum"><p class="t">No end: crashed <span class="s">&middot; attempt 1 stopped after&nbsp;<span class="m ln">#9</span></span></p><span class="k">no note.attempt.end for attempt&nbsp;1</span></div></li>
+                                </ol>
+                            </div>
+                            <div class="grp cut">
+                                <p class="grp-label caps"><svg class="cut-rail"><rect width="100%" height="100%"/><line x1="0.5" y1="0" x2="0.5" y2="100%"/></svg>Attempt 2 &middot; resume &middot; pid 10492</p>
+                                <ol class="rows">
+                                    <li class="row mk-hollow"><div class="sum"><p class="t">Attempt 2 <span class="s">&middot; <i class="dm rb"></i>4 steps read back</span> <span class="s">&middot; nothing repeated</span></p><span class="tm">04:24:47.548</span><span class="k">note.attempt.start&nbsp;#11</span><span class="h">d8ba7163d2</span></div></li>
+                                    <li class="row mk-fill reply"><div class="sum"><p class="t"><span class="w">Model call</span> <i class="ar"></i> <span class="s">reply</span> <span class="s">&middot;</span> <bdi class="q">&ldquo;Hi Sam, you were charged twice for order 20417&hellip;&rdquo;</bdi></p><span class="tm">04:24:47.563</span><span class="k">draw.intent&nbsp;#12&nbsp;&middot; draw.ok&nbsp;#13</span><span class="h">99d01d1061</span></div></li>
+                                    <li class="row mk-big"><div class="sum"><p class="t">Attempt 2 ended ok <span class="s">&middot; 1 fresh, 4 replayed</span></p><span class="tm">04:24:48.475</span><span class="k">note.attempt.end&nbsp;#14</span><span class="h">064845a132</span></div></li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <p class="chain"><i class="dm"></i><span>Chain verified</span><span class="s">&middot; 16 entries</span><span class="m hd"><span class="d">&middot; </span>head <span class="hx">f48b4d13e497c2c3&hellip;</span></span></p>
+                    </div>
+
+                    <!-- The reel: the one place for filmed footage of the
+                         close-up. Today it is empty and the close-up is the
+                         console's own page. To use footage instead, put a
+                         muted video here, for example
+                         <video src="/pragmatic/assets/close-up.mp4" muted playsinline preload="metadata"></video>
+                         and pragmatic.js shows it, playing, for the close-up,
+                         then lets it dissolve into the page as the camera
+                         pulls out. -->
+                    <div class="pc-reel"></div>
+
+                    <!-- The depth of field: soft focus and paper at the top
+                         and the foot of the close-up; soft paper edges
+                         wherever the sheet runs on out of frame; and, on a
+                         narrow screen, the mist the sheet goes into where
+                         the cards lie over it. -->
+                    <div class="pc-dof"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="fade t"></i><i class="fade b"></i><i class="edge top"></i><i class="edge foot"></i><i class="edge right"></i><i class="edge veil"></i><i class="mist"></i></div>
+                    </div>
+
+                    <div class="pc pc-cards">
+                        <div class="card anchor">
+                            <div class="card-h"><p class="card-t">Anchored by 2 independent timestamp services</p><span class="tag">Preview</span></div>
+                            <div class="rule"></div>
+                            <ul class="ops">
+                                <li class="op"><i></i><span class="nm">DigiCert</span><span class="st">RFC 3161 &middot; trusted</span><span class="root">DigiCert Trusted Root G4</span></li>
+                                <li class="op"><i></i><span class="nm">Sectigo</span><span class="st">RFC 3161 &middot; trusted</span><span class="root">USERTrust RSA Certification Authority</span></li>
+                            </ul>
+                            <div class="card-b">
+                                <p class="fact">16 of 16 entries<span class="dot">&middot;</span><wbr>existed no later than <span class="nw">14&nbsp;Oct&nbsp;2026,</span> <span class="nw"><span class="m">04:24:53</span>&nbsp;UTC</span></p>
+                                <p class="note">An anchor proves these entries existed by then, not that they were true.</p>
+                            </div>
+                        </div>
+                        <div class="card check">
+                            <div class="card-h"><p class="card-t">Evidence check</p></div>
+                            <div class="card-b">
+                                <div class="dl">
+                                    <p class="ln"><span class="dt">journal</span><span class="dd">format 2, 16 entries</span></p>
+                                    <p class="ln"><span class="dt">head</span><span class="dd">f48b4d13e497&hellip;</span></p>
+                                    <p class="ln"><span class="dt">chain</span><span class="dd">every link, commitment and ref verifies</span></p>
+                                    <p class="ln res"><span class="dt">result</span><span class="dd"><i class="dm"></i>verified</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="cj-lines"></div>
-            </div>
+
+                <figcaption class="pc-cap">
+                    <i class="pc-pulse" aria-hidden="true"></i>
+                    <span class="pc-cap-t">From Pragmatic Server&rsquo;s console, in preview for 0.6: a&nbsp;sample refund agent&rsquo;s run on 14&nbsp;Oct&nbsp;2026, with a scripted model and scripted tools, <span class="v-live">played back</span><span class="v-still">as it ended</span>.</span>
+                    <button class="pc-toggle" type="button" aria-label="Pause the console playback"><span class="w">Pause</span></button>
+                    <span class="sr-only">The console page shows the run refund-20417. A sample refund agent, with a scripted model and scripted tools, looks up order 20417, finds two charges, and refunds one; no payment was made. Its process is killed after the refund, so attempt 1 has no end. Attempt 2 resumes the run, reads the four finished steps back from the journal without repeating them, makes one more model call to reply to the customer, and ends ok: 1 fresh step, 4 replayed. The chain of 16 entries verifies. Two independent timestamp services, DigiCert and Sectigo, anchor all 16 entries: they existed no later than 04:24:53 UTC on 14 October 2026. The evidence check reports the run verified.</span>
+                </figcaption>
+            </figure>
         </div>
     </section>
 
 
     <section class="index">
-        <div class="running-head"><em>By the numbers</em></div>
+        <h2 class="running-head"><em>By the numbers</em></h2>
         <div class="index-inner">
             <div class="index-row">
-                <span class="t">Replay determinism, reference suite</span>
+                <span class="t">Test runs replayed exactly, without calling the model</span>
                 <span class="dots"></span>
-                <span class="v">1000 of 1000</span>
+                <span class="v">1000&nbsp;of&nbsp;1000</span>
             </div>
             <div class="index-row">
-                <span class="t">Journal append, flat to a million entries</span>
+                <span class="t">Crash points tested, each resumed exactly</span>
                 <span class="dots"></span>
-                <span class="v">~230 ns</span>
+                <span class="v">Every&nbsp;entry</span>
             </div>
             <div class="index-row">
-                <span class="t">Tool executions across crash, resume, and replay</span>
-                <span class="dots"></span>
-                <span class="v">Exactly one</span>
-            </div>
-            <div class="index-row">
-                <span class="t">Dependencies in the Rust core</span>
+                <span class="t">Finished tool calls repeated when a crashed run resumes</span>
                 <span class="dots"></span>
                 <span class="v">None</span>
+            </div>
+            <div class="index-row">
+                <span class="t">License of the runtime, SDKs, CLI and verifier, from 0.5</span>
+                <span class="dots"></span>
+                <span class="v">Apache&nbsp;2.0</span>
             </div>
         </div>
     </section>
 
 
     <section class="spread">
-        <p class="statement"><em>Durable execution made software reliable.</em> <span>But its replay model assumes determinism, and LLM agents are not deterministic. Everyone else caches around that. Pragmatic models it.</span></p>
+        <p class="statement"><em>Someone will ask what your agent did.</em> <span>Pragmatic keeps the record, written down as it happened.</span></p>
     </section>
 
 
-    <section id="runtime">
-        <div class="running-head"><em>Three guarantees, every run</em></div>
+    <section class="book" id="record">
+        <h2 class="running-head"><em>What it records</em></h2>
+        <p class="book-lede">Everything that could change <em>what the agent does next.</em></p>
+        <div class="book-entry">
+            <span class="caption">Model calls</span>
+            <h3>The full request and response.</h3>
+            <p class="prose">What your agent sent to Anthropic or OpenAI, and exactly what came back. The response is written to the journal before your agent can read it. The model, stop reason and token counts sit alongside it, so the journal is also a record of what each run cost.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Tool calls</span>
+            <h3>Written down before they run.</h3>
+            <p class="prose">Each tool call is recorded before the tool runs, and its result after. If the process dies in between, the record shows exactly which call was in flight, and nothing pretends it finished.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Inputs and time</span>
+            <h3>Messages in, clock reads.</h3>
+            <p class="prose">Messages your agent receives while it runs, and every time it reads the clock. On replay it gets the same values back, so a run that depended on the time of day replays as it happened.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Context</span>
+            <h3>Which code, which attempt.</h3>
+            <p class="prose">Mark the agent with <code>@pragmatic.durable</code> and the journal records which version of its code ran. In 0.6, in preview, the journal also notes each attempt to run it and how each attempt ended. On Pragmatic Server, also in preview, a separate access log records who read each run, and every erasure is recorded with who made it and why.</p>
+        </div>
+    </section>
+
+
+    <section id="four">
+        <h2 class="running-head"><em>Four things, in one record</em></h2>
+        <div class="look-grid">
+            <div class="look">
+                <h3>Complete <em>by construction.</em></h3>
+                <p class="prose">Calls go through Pragmatic on their way out, and each result is written down before your agent sees it. If it cannot be written, the run stops instead of carrying on unrecorded. In 0.5, that covers the supported model calls on a wrapped client and every step made through <code>ctx</code>; other methods on the client pass through unrecorded. In 0.6, in preview, capture moves to the HTTP layer, and anything it cannot record is refused. What your code does outside Pragmatic is not recorded, and we say so plainly.</p>
+            </div>
+            <div class="look">
+                <h3>Exact replay, <em>model never called.</em></h3>
+                <p class="prose">Replay runs your agent again and serves every response, tool result, input and clock read from the journal. The model is swapped for a stand-in that refuses to answer, so nothing is called and nothing is billed. Mark the agent with <code>@pragmatic.durable</code> and replay refuses a changed agent before it starts. Without it, replay stops at the first step that differs from the record, instead of drifting.</p>
+            </div>
+            <div class="look">
+                <h3>Erasure that <em>keeps the proof.</em></h3>
+                <p class="prose">Each piece of content is stored separately, with its own fingerprint. Erasing a person’s data removes the content and keeps the fingerprint, so the rest of the journal still verifies, and the erasure itself goes on the record. Being built for 0.6, in design-partner preview.</p>
+            </div>
+            <div class="look">
+                <h3>Evidence anyone <em>can check.</em></h3>
+                <p class="prose">Export a run as one evidence file. An auditor checks it on their own machine with the open-source verifier, against timestamp authorities and witness keys they chose. Nothing in the file is taken on trust, and nothing has to reach us. Being built for 0.6, in design-partner preview.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="dark-section" id="recovery">
+        <h2 class="running-head"><em>The second pillar: crash recovery</em></h2>
         <div class="look">
-            <h3>Journal <em>every step.</em></h3>
-            <p class="prose">Each model turn's realized outcome is recorded to an append-only log as the run proceeds, tool calls and token usage included. The journal is the source of truth for what the agent actually did, not a reconstruction after the fact.</p>
+            <h3>Resume <em>where it stopped.</em></h3>
+            <p class="prose">A crashed run picks up from its journal, on the same machine or another one that can read it. Model calls that finished are read back instead of paid for again, and tool calls that finished are not repeated. A call cut off mid-flight runs again: a model call still waiting for its reply is sent again, and a tool call runs again by default. Pass a recover policy to mark a tool call done instead.</p>
         </div>
         <div class="look">
-            <h3>Recover <em>from any crash.</em></h3>
-            <p class="prose">Resume exactly where the agent stopped. Recorded outcomes are read back instead of re-sampled, so there are no duplicate model calls, no re-executed tools, and no lost work after a failure.</p>
+            <h3>Long runs, <em>no lost work.</em></h3>
+            <p class="prose">An agent nine hundred steps into a thousand-step job does not start over. It continues at step nine hundred and one, with the same answers it had before the crash.</p>
         </div>
-        <div class="look">
-            <h3>Replay <em>faithfully.</em></h3>
-            <p class="prose">Reproduce the entire run exactly for debugging and audit, nondeterministic LLM behavior included. Replaying the journal reproduces the original trace, exactly, every time.</p>
+    </section>
+
+
+    <section class="book" id="who">
+        <h2 class="running-head"><em>Who it is for</em></h2>
+        <p class="book-lede">Agents that someone <em>outside engineering will question.</em></p>
+        <div class="book-entry">
+            <span class="caption">AI-agent startups</span>
+            <h3>Selling into regulated companies.</h3>
+            <p class="prose">A bank, insurer or hospital runs a security review and asks how you record what your agent does, who can see it and how long you keep it. Answer with a record they can verify themselves, not a screenshot of a dashboard.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Regulated industries</span>
+            <h3>Fintech, insurance, health, legal.</h3>
+            <p class="prose">Agents that move money, decide claims, touch clinical workflows or draft filings. Internal audit wants a run reconstructed, a customer disputes a decision, or a regulator asks; the EU AI Act, for one, asks high-risk systems to keep automatic logs. Pragmatic provides evidence for requests like these. Meeting a regulation still takes your own controls and processes.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Compliance and security</span>
+            <h3>The people who sign off.</h3>
+            <p class="prose">Compliance officers, AI governance leads and security teams who need to show that a control worked, keep runs under a legal hold, or answer a request to erase someone’s data.</p>
+        </div>
+    </section>
+
+
+    <section class="book" id="fit">
+        <h2 class="running-head"><em>Where it fits</em></h2>
+        <p class="book-lede">Next to your tracing and <em>orchestration tools.</em></p>
+        <div class="compare">
+            <div class="compare-col">
+                <span class="caption">Tracing and observability</span>
+                <h3>Langfuse, LangSmith, Datadog.</h3>
+                <p class="prose">Keep them for watching and debugging. They store traces in databases that can be edited, and usually keep them for days or months. Pragmatic keeps the record you may have to stand behind later.</p>
+            </div>
+            <div class="compare-col">
+                <span class="caption">Durable execution</span>
+                <h3>Temporal, DBOS.</h3>
+                <p class="prose">They recover workflows well. Their history is internal state for the engine, not an audit artifact: it was not built to be checked by someone who does not trust the operator.</p>
+            </div>
+            <div class="compare-col is-us">
+                <span class="caption">Pragmatic</span>
+                <h3>The record itself.</h3>
+                <p class="prose">Records every call made through it before the agent sees the result, replays without calling the model, and, with 0.6 (in design-partner preview), produces evidence anyone can verify without trusting whoever ran the agent.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="book" id="open">
+        <h2 class="running-head"><em>Open source, plus Pragmatic Server</em></h2>
+        <p class="book-lede">Open where trust <em>depends on it.</em></p>
+        <div class="book-entry">
+            <span class="caption">Open source, Apache 2.0</span>
+            <h3>The runtime and the verifier.</h3>
+            <p class="prose">From 0.5, the runtime, the Python SDK, the Rust crates, the CLI, the journal format and the offline verifier are open source under the Apache License 2.0. Use them in production at any scale. Anyone, including an auditor, can check a journal with them.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Commercial, design-partner preview</span>
+            <h3>Pragmatic Server.</h3>
+            <p class="prose">A shared journal store that runs in your own environment, with independent anchoring, retention rules, erasure, roles, an access log, evidence bundles and a console. It is being built for 0.6 and is in preview with design partners. It is not yet generally available.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Planned</span>
+            <h3>A hosted independent witness.</h3>
+            <p class="prose">A witness run by Pragmatic Research that countersigns your server’s checkpoints, alongside public timestamp authorities. It sees fingerprints only, never content or run names.</p>
         </div>
     </section>
 
     <section class="finale">
         <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
-        <h2>Crash. Recover.<br><em>Replay, exactly.</em></h2>
-        <p class="aside">Tell us what you're building.</p>
+        <h2>On the record.<br><em>Before anyone asks.</em></h2>
+        <p class="aside">We are working with a small group of design partners on Pragmatic Server and 0.6. Tell us what your agents do, and who asks about them.</p>
         <div class="finale-links">
-            <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
-            <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Talk to us</a>
+            <a class="lnk primary" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Become a design partner</a>
+            <a class="lnk" href="/pragmatic/docs/quickstart/">Read the quickstart</a>
         </div>
     </section>
 
+    </main>
 
-    <footer class="site-footer">
-        <div class="f-inner">
-            <div class="f-cta">
-                <p class="f-line">Tell us what <em>you're building.</em></p>
-                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+    <footer class="pf-colophon">
+        <div class="pfc-inner">
+            <div class="pfc-cta">
+                <p class="pfc-line">Tell us what <em>you&rsquo;re building.</em></p>
+                <a class="pfc-cta-link" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Become a design partner</a>
             </div>
-            <div class="f-rule"></div>
-            <div class="f-main">
-                <div class="f-brand">
-                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
-                    <span>Pragmatic</span>
+
+            <div class="pfc-main">
+                <div class="pfc-brand">
+                    <p class="pfc-strut pfc-word"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>Pragmatic</p>
+                    <p class="pfc-row pfc-desc">The system of record <em>for AI agents.</em></p>
+                    <p class="pfc-row pfc-license"><span>Open source under Apache 2.0 from 0.5</span></p>
                 </div>
-                <div class="f-cols">
-                    <div class="f-col">
-                        <span class="f-head">Explore</span>
-                        <a href="/pragmatic/">Overview</a>
-                        <a href="/pragmatic/runtime/">The runtime</a>
-                        <a href="/pragmatic/docs/">Docs</a>
-                        <a href="/pragmatic/practice/">In practice</a>
-                        <a href="/pragmatic/newsroom/">Newsroom</a>
-                        <a href="/pragmatic/questions/">Questions</a>
+
+                <nav class="pfc-nav" aria-label="Footer">
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-product"><span>Product</span></h2>
+                        <ul role="list" aria-labelledby="pfc-product">
+                            <li><a href="/pragmatic/">Overview</a></li>
+                            <li><a href="/pragmatic/runtime/">How it works</a></li>
+                            <li><a href="/pragmatic/practice/">In practice</a></li>
+                            <li><a href="/pragmatic/docs/">Docs</a></li>
+                        </ul>
                     </div>
-                    <div class="f-col">
-                        <span class="f-head">Connect</span>
-                        <a href="mailto:me@aniketh.net">Email</a>
-                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
-                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
-                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
-                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-company"><span>Company</span></h2>
+                        <ul role="list" aria-labelledby="pfc-company">
+                            <li><a href="/pragmatic/questions/">Questions</a></li>
+                            <li><a href="/pragmatic/newsroom/">Newsroom</a></li>
+                            <li><a href="mailto:me@aniketh.net">Email</a></li>
+                        </ul>
                     </div>
-                </div>
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-elsewhere"><span>Elsewhere</span></h2>
+                        <ul role="list" aria-labelledby="pfc-elsewhere">
+                            <li><a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a></li>
+                            <li><a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a></li>
+                            <li><a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a></li>
+                            <li><a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a></li>
+                        </ul>
+                    </div>
+                </nav>
             </div>
-            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+
+            <div class="pfc-base">
+                <p class="pfc-copy">&copy; 2026 Pragmatic Research, Inc. <span>All rights reserved.</span></p>
+                <a class="pfc-top" href="#top">Back to top</a>
+            </div>
         </div>
     </footer>
 
+    <script src="/pragmatic/nav.js" defer></script>
     <script src="/pragmatic/pragmatic.js" defer></script>
 </body>
 </html>

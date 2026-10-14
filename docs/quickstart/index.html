@@ -5,251 +5,291 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quickstart · Pragmatic</title>
 
-    <meta name="description" content="Five minutes from cargo add to a crash-proof, replayable agent: install, write one function, run it, kill it, resume it, and replay it bit for bit.">
+    <meta name="description" content="Record, resume, replay and verify an AI agent in Python: install pragmatic-runtime, wrap your Anthropic or OpenAI client, run tools on the record, and verify the run with the pragmatic CLI.">
     <meta name="author" content="Aniketh Bandlamudi">
 
     <meta property="og:title" content="Quickstart · Pragmatic">
-    <meta property="og:description" content="Five minutes from cargo add to a crash-proof, replayable agent: install, write one function, run it, kill it, resume it, and replay it bit for bit.">
+    <meta property="og:description" content="Record, resume, replay and verify an AI agent in Python: install pragmatic-runtime, wrap your Anthropic or OpenAI client, run tools on the record, and verify the run with the pragmatic CLI.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://aniketh.net/pragmatic/assets/pragmaticog.png">
     <link rel="canonical" href="https://aniketh.net/pragmatic/docs/quickstart/">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@0;1&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/pragmatic/pragmatic.css">
 
-    <link rel="icon" type="image/png" href="/pragmatic/assets/pragmaticfavicon.png">
+    <link rel="icon" type="image/png" sizes="180x180" href="/pragmatic/assets/pragmaticfavicon.png">
+    <link rel="icon" type="image/svg+xml" href="/pragmatic/assets/pragmatic.svg">
+    <link rel="apple-touch-icon" href="/pragmatic/assets/pragmaticfavicon.png">
+    <meta name="theme-color" content="#f2efe6">
 </head>
 <body>
+
+    <a class="skip" href="#main">Skip to content</a>
 
     <header>
         <a href="/pragmatic/" class="masthead">
             <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
             <span>Pragmatic</span>
         </a>
-        <nav>
-            <a href="/pragmatic/runtime/">The runtime</a>
-            <a class="active" href="/pragmatic/docs/">Docs</a>
-            <a href="/pragmatic/practice/">In practice</a>
-            <a href="/pragmatic/newsroom/">Newsroom</a>
-            <a href="/pragmatic/questions/">Questions</a>
-            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic early access">Early access</a>
-        </nav>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-menu"><span>Menu</span></button>
+        <div class="menu" id="site-menu">
+            <div class="menu-top">
+                <a href="/pragmatic/" class="masthead">
+                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
+                    <span>Pragmatic</span>
+                </a>
+                <button class="menu-btn menu-close" type="button"><span>Close</span></button>
+            </div>
+            <nav aria-label="Main">
+                <a href="/pragmatic/runtime/">How it works</a>
+                <a href="/pragmatic/practice/">In practice</a>
+                <a aria-current="true" href="/pragmatic/docs/">Docs</a>
+                <a href="/pragmatic/questions/">Questions</a>
+                <a href="/pragmatic/newsroom/">Newsroom</a>
+            </nav>
+            <a class="cta" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Design partners</a>
+        </div>
     </header>
+
+    <main id="main" tabindex="-1">
 
     <!-- Page cover -->
     <section class="page-cover">
         <h1>The <em>quickstart.</em></h1>
-        <p class="page-deck">Five minutes from cargo add to a crash-proof, replayable agent. Every snippet on this page runs against version 0.4 of the crates.</p>
+        <p class="page-deck">One Python agent, from install to a run you can resume after a crash, replay without the model, and verify from the command line. Every snippet on this page targets version 0.5.</p>
         <nav class="doc-sub" aria-label="Documentation pages">
             <a href="/pragmatic/docs/">Docs</a>
-            <a class="here" href="/pragmatic/docs/quickstart/">Quickstart</a>
+            <a aria-current="page" href="/pragmatic/docs/quickstart/">Quickstart</a>
         </nav>
     </section>
 
     <section class="doc" id="install">
-        <div class="running-head"><em>1 · Install</em></div>
+        <h2 class="running-head"><em>1 · Install</em></h2>
         <div class="measure">
-            <p>Two crates. <code>pragmatic</code> is the runtime, with zero dependencies. <code>pragmatic-anthropic</code> gives you Claude as an Oracle; skip it and implement the <code>Oracle</code> trait over your own model client if you prefer.</p>
+            <p>One package, with the extra for your model provider. 0.5 is about to be released; until then, install it from source. You need Python 3.9 or later and a Rust toolchain.</p>
         </div>
         <div class="doc-code">
-            <p class="file">Cargo.toml</p>
-<pre>[dependencies]
-pragmatic = "0.4"
-pragmatic-anthropic = "0.4"   <span class="c-com"># or implement Oracle for your own client</span></pre>
+            <p class="file">your terminal</p>
+<pre>git clone -b release/0.5.0 https://github.com/pragmaticco/pragmatic
+pip install "./pragmatic/crates/pragmatic-python[anthropic]"   <span class="c-com"># or [openai]</span></pre>
         </div>
     </section>
 
-    <section class="doc" id="write">
-        <div class="running-head"><em>2 · Write the agent</em></div>
+    <section class="doc" id="wrap">
+        <h2 class="running-head"><em>2 · Wrap your client</em></h2>
         <div class="measure">
-            <p>An agent is a plain function over <code>Ctx</code>. Route model calls through <code>ctx.oracle</code> so they are journaled, route external writes through <code>ctx.effect</code> so they run exactly once, and mark the function <code>#[pragmatic::durable]</code>.</p>
+            <p>An agent is a function that takes <code>ctx</code>. Wrap your client with <code>ctx.wrap</code>: what you get back works exactly like the client, and every call through it is written to the journal before your agent sees the response.</p>
         </div>
         <div class="doc-code">
-            <p class="file">src/main.rs</p>
-<pre>use pragmatic::{Ctx, Fault, Value};
+            <p class="file">agent.py</p>
+<pre>import anthropic
+import pragmatic
 
-#[pragmatic::durable]
-fn research(ctx: &amp;mut Ctx) -&gt; Result&lt;Value, Fault&gt; {
-    let plan = ctx.oracle("plan the research task")?;   <span class="c-com">// journaled</span>
+TOOLS = [{"name": "search", "description": "Search the corpus",
+          "input_schema": {"type": "object",
+                           "properties": {"q": {"type": "string"}}}}]
 
-    let mut findings = Vec::new();
-    for step in 0..10 {
-        findings.push(ctx.oracle(format!("probe {step}: {plan}"))?);
-    }
+def search(q: str) -> list[str]:
+    ...  <span class="c-com"># your tool</span>
 
-    <span class="c-com">// A durable effect: journaled before it runs (write-ahead),</span>
-    <span class="c-com">// its result journaled after. Replay reuses the result;</span>
-    <span class="c-com">// the world is touched exactly once.</span>
-    ctx.effect("publish", format!("{} findings", findings.len()), |arg| {
-        <span class="c-com">// your real side effect: S3 write, webhook, DB insert...</span>
-        Ok(Value::from(format!("s3://reports/{arg}")))
-    })
-}</pre>
+rt = pragmatic.Runtime("./journals")
+
+def research(ctx):
+    client = ctx.wrap(anthropic.Anthropic())  <span class="c-com"># wrap the client you already use</span>
+    messages = [{"role": "user",
+                 "content": "Find papers on durable execution."}]
+    while True:
+        msg = client.messages.create(
+            model="claude-sonnet-5-5", max_tokens=1024,
+            tools=TOOLS, messages=messages)
+        messages.append({"role": "assistant", "content": msg.content})
+        if msg.stop_reason != "tool_use":
+            return msg.content[0].text
+        messages += ctx.run_tools(msg, {"search": search})</pre>
+        </div>
+    </section>
+
+    <section class="doc" id="tools">
+        <h2 class="running-head"><em>3 · Run tools on the record</em></h2>
+        <div class="measure">
+            <p><code>ctx.run_tools(response, tools)</code> performs every tool call in a model response. Each call is written to the journal before the tool runs, and its result after. You get back the messages to append, already in your provider’s format. A tool that raises is recorded and reported to the model as an error, instead of crashing the run.</p>
+            <p>For a single function outside a model response, use <code>ctx.tool</code>:</p>
+        </div>
+        <div class="doc-code">
+            <p class="file">agent.py</p>
+<pre>page = ctx.tool("fetch", fetch_url, url)     <span class="c-com"># any function, on the record</span></pre>
         </div>
     </section>
 
     <section class="doc" id="run">
-        <div class="running-head"><em>3 · Run it durably</em></div>
+        <h2 class="running-head"><em>4 · Run, resume, replay</em></h2>
         <div class="doc-code">
-            <p class="file">src/main.rs</p>
-<pre>use pragmatic::Runtime;
-use pragmatic_anthropic::AnthropicOracle;
+            <p class="file">agent.py</p>
+<pre>report = rt.run("research-42", research)     <span class="c-com"># record</span>
 
-let oracle = AnthropicOracle::from_env()?     <span class="c-com">// reads ANTHROPIC_API_KEY</span>
-    .model("claude-sonnet-5")
-    .max_tokens(1024);
+<span class="c-com"># The process died mid-run? Resume it:</span>
+report = rt.resume("research-42", research)  <span class="c-com"># finished calls are not repeated</span>
 
-let mut rt = Runtime::on_dir("./journals", oracle)?;
-let report = rt.run("research-42", research)?;
-println!("{}", report.output);</pre>
+<span class="c-com"># Replay the whole run, for debugging or an audit:</span>
+audit = rt.replay("research-42", research)   <span class="c-com"># the model is never called</span>
+assert audit.output == report.output
+
+assert rt.verify("research-42")              <span class="c-com"># the hash chain is intact</span></pre>
         </div>
         <div class="measure">
-            <p>Every oracle call's realized outcome now lands in <code>./journals/research-42.journal</code>: append-only, hash-chained, synced to disk as the run proceeds.</p>
+            <p>Resume reads the recorded part of the run back into your agent and carries on recording from where it stopped. Replay serves everything from the journal and calls nothing. If a step your agent takes differs from the record, replay raises <code>JournalDesync</code> at that step instead of quietly drifting. Mark the agent with <code>@pragmatic.durable</code> and replay refuses a changed agent before it starts.</p>
+            <p>If the crash cut off a tool call in the middle, it runs again by default. Pass a <code>recover</code> policy to <code>rt.resume</code> to mark it done instead. A model call that was still waiting for its reply is sent again.</p>
         </div>
     </section>
 
-    <section class="doc" id="recover">
-        <div class="running-head"><em>4 · Crash, recover</em></div>
+    <section class="doc" id="verify">
+        <h2 class="running-head"><em>5 · Verify a run</em></h2>
         <div class="measure">
-            <p>Kill the process anywhere, say step nine of a thousand. Then:</p>
-        </div>
-        <div class="doc-code">
-            <p class="file">src/main.rs</p>
-<pre>let report = rt.resume("research-42", research)?;</pre>
-        </div>
-        <div class="measure">
-            <p>The nine recorded steps are read back from the journal, with zero model calls and zero duplicate effects; recording continues at step nine. The agent function cannot tell the difference.</p>
-        </div>
-    </section>
-
-    <section class="doc" id="replay">
-        <div class="running-head"><em>5 · Replay, exactly</em></div>
-        <div class="doc-code">
-            <p class="file">src/main.rs</p>
-<pre>let audit = rt.replay("research-42", research)?;   <span class="c-com">// the model is NEVER called</span>
-assert_eq!(audit.trace, report.trace);</pre>
-        </div>
-        <div class="measure">
-            <p>Strict replay reproduces the run bit for bit, nondeterministic model behavior included, for time-travel debugging and audit. During replay the oracle is swapped for one that refuses to sample, so "the model is never called" is enforced, not promised.</p>
-        </div>
-    </section>
-
-    <section class="doc" id="inspect">
-        <div class="running-head"><em>6 · Inspect</em></div>
-        <div class="measure">
-            <p>Install the CLI once, and every journal directory becomes inspectable from the terminal or the browser.</p>
+            <p>The <code>pragmatic</code> command-line tool reads the same journal files. Install it from the repository you cloned.</p>
         </div>
         <div class="doc-code">
             <p class="file">your terminal</p>
-<pre>cargo install pragmatic-cli
+<pre>cargo install --path pragmatic/crates/pragmatic-cli
 
-pragmatic runs   --dir ./journals            <span class="c-com"># every run, chain status</span>
-pragmatic show   research-42 --dir ./journals
-pragmatic verify --all --dir ./journals      <span class="c-com"># walk the tamper-evident chain</span>
-pragmatic export research-42 --dir ./journals -o run.html
-pragmatic serve  --dir ./journals            <span class="c-com"># live console on 127.0.0.1:7171</span></pre>
+pragmatic runs   --dir ./journals                <span class="c-com"># every run and its status</span>
+pragmatic verify research-42 --dir ./journals    <span class="c-com"># research-42: verified (n entries)</span>
+pragmatic verify --all --dir ./journals
+pragmatic show   research-42 --dir ./journals    <span class="c-com"># the timeline, in your terminal</span>
+pragmatic export research-42 --dir ./journals -o research-42.html
+pragmatic serve  --dir ./journals                <span class="c-com"># a console on 127.0.0.1:7171</span></pre>
+        </div>
+        <div class="measure">
+            <p><code>verify</code> recomputes every fingerprint in the chain and names the first entry that does not match. For a keyed journal, pass the same key with <code>--key</code>. <code>export</code> writes one run as a self-contained HTML file you can attach to a ticket or send to a reviewer.</p>
+        </div>
+        <p class="doc-note">Evidence bundles, which add independent timestamps an outside auditor can check, come with 0.6 and are in design-partner preview. See <a href="/pragmatic/runtime/#verify">how an auditor checks a run</a>.</p>
+    </section>
+
+    <section class="doc" id="clients">
+        <h2 class="running-head"><em>What 0.5 records</em></h2>
+        <div class="measure">
+            <p><code>ctx.wrap</code> records these calls, from sync and async clients:</p>
+            <ul>
+                <li><code>anthropic.Anthropic</code> and <code>AsyncAnthropic</code>: <code>messages.create</code> and <code>beta.messages.create</code>.</li>
+                <li><code>openai.OpenAI</code>, <code>AsyncOpenAI</code> and <code>AzureOpenAI</code>: <code>chat.completions.create</code> and <code>responses.create</code>.</li>
+            </ul>
+            <p>Streaming and <code>.parse()</code> are refused inside a run in 0.5, rather than quietly bypassing the journal. Anything else on the client passes through unrecorded. For another model client, record calls yourself with <code>ctx.draw(prompt, sample)</code>, where <code>prompt</code> fully identifies the request. <code>ctx.now()</code> and <code>ctx.recv()</code> record clock reads and incoming messages.</p>
+            <p>Transport settings such as timeouts and extra headers are never recorded, so API keys stay out of journals.</p>
         </div>
     </section>
 
     <section class="doc" id="async">
-        <div class="running-head"><em>Async agents</em></div>
+        <h2 class="running-head"><em>Async agents</em></h2>
         <div class="measure">
-            <p>Same API, awaited. Executor-agnostic and still zero-dependency: drive it from tokio, smol, or the built-in <code>pragmatic::block_on</code>.</p>
-        </div>
-        <div class="doc-code">
-            <p class="file">src/main.rs</p>
-<pre>use pragmatic::{AsyncCtx, AsyncRuntime, Fault, Value};
-
-#[pragmatic::durable]
-async fn research(ctx: &amp;mut AsyncCtx&lt;'_, MyOracle&gt;) -&gt; Result&lt;Value, Fault&gt; {
-    let plan = ctx.oracle("plan the task").await?;
-    ctx.effect("publish", plan, async |arg| {
-        Ok(Value::from(format!("s3://{arg}")))   <span class="c-com">// awaited tool call</span>
-    }).await
-}
-
-let mut rt = AsyncRuntime::on_dir("./journals", oracle)?;
-let report = rt.run("research-42", research).await?;</pre>
-        </div>
-        <div class="measure">
-            <p>Implement <code>AsyncOracle</code> over your async HTTP client for native async model calls; every sync <code>Oracle</code> also works as-is.</p>
+            <p>Make the agent <code>async def</code>, use the async client, and <code>await ctx.arun_tools</code> and <code>ctx.atool</code>. <code>rt.run</code> drives it on its own event loop. In 0.5, recorded steps run one at a time, so the order they land in the journal can be reproduced; parallel branches arrive with 0.6.</p>
         </div>
     </section>
 
-    <section class="doc" id="python">
-        <div class="running-head"><em>Python</em></div>
-        <div class="doc-code">
-            <p class="file">your terminal</p>
-<pre>pip install pragmatic-runtime</pre>
-        </div>
-        <div class="doc-code">
-            <p class="file">research.py</p>
-<pre>import pragmatic
-
-rt = pragmatic.Runtime("./journals", my_model_fn)   <span class="c-com"># (str) -> str</span>
-
-def research(ctx):
-    plan = ctx.oracle("plan the task")
-    return ctx.effect("publish", plan, lambda arg: f"s3://{arg}")
-
-report = rt.run("research-42", research)
-report = rt.resume("research-42", research)   <span class="c-com"># crash-recover, no re-sampling</span>
-audit  = rt.replay("research-42", research)   <span class="c-com"># model never called</span>
-assert audit.trace == report.trace and rt.verify("research-42")</pre>
-        </div>
+    <section class="doc" id="rust">
+        <h2 class="running-head"><em>Rust</em></h2>
         <div class="measure">
-            <p>Journals written from Python are byte-compatible with the Rust runtime and every CLI command above.</p>
+            <p>The same runtime, natively. Point Cargo at the <code>release/0.5.0</code> branch of the repository.</p>
+        </div>
+        <div class="doc-code">
+            <p class="file">Cargo.toml</p>
+<pre>[dependencies.pragmatic]
+git = "https://github.com/pragmaticco/pragmatic"
+branch = "release/0.5.0"
+
+[dependencies.pragmatic-anthropic]
+git = "https://github.com/pragmaticco/pragmatic"
+branch = "release/0.5.0"</pre>
+        </div>
+        <div class="doc-code">
+            <p class="file">src/main.rs</p>
+<pre>use pragmatic::{Ctx, Fault, Runtime, Value};
+use pragmatic_anthropic::AnthropicOracle;
+
+#[pragmatic::durable]
+fn research(ctx: &amp;mut Ctx) -&gt; Result&lt;Value, Fault&gt; {
+    let plan = ctx.oracle("plan the research task")?;   <span class="c-com">// on the record</span>
+    <span class="c-com">// a side effect, recorded before it runs</span>
+    ctx.effect("publish", format!("report: {plan}"), |arg| {
+        Ok(Value::from(format!("s3://reports/{arg}")))
+    })
+}
+
+let oracle = AnthropicOracle::from_env()?.model("claude-sonnet-5-5");
+let mut rt = Runtime::on_dir("./journals", oracle)?;
+rt.run("research-42", research)?;
+rt.resume("research-42", research)?;     <span class="c-com">// after a crash</span>
+rt.replay("research-42", research)?;     <span class="c-com">// the model is never called</span></pre>
         </div>
     </section>
 
     <section class="doc" id="next">
-        <div class="running-head"><em>Where next</em></div>
+        <h2 class="running-head"><em>Where next</em></h2>
         <div class="measure">
             <ul>
-                <li><a href="/pragmatic/docs/">The docs</a>: how to get Pragmatic, what ships in the repository, and the terms.</li>
-                <li><a href="https://github.com/pragmaticco/pragmaticMain" target="_blank" rel="noopener">The repository</a>: the full usage guide, and runnable examples that need no API key.</li>
+                <li><a href="/pragmatic/runtime/">How it works</a>: the journal, recovery, and what 0.6 adds.</li>
+                <li><a href="/pragmatic/questions/">Questions</a>: how Pragmatic compares to tracing tools and durable execution, and what a record can prove.</li>
+                <li><a href="https://github.com/pragmaticco/pragmatic/tree/release/0.5.0" target="_blank" rel="noopener">The repository’s <code>release/0.5.0</code> branch</a>: the full usage guide, and runnable examples that need no API key.</li>
             </ul>
         </div>
     </section>
 
-    <footer class="site-footer">
-        <div class="f-inner">
-            <div class="f-cta">
-                <p class="f-line">Tell us what <em>you're building.</em></p>
-                <a class="lnk" href="mailto:me@aniketh.net?subject=Pragmatic early access">Request early access</a>
+    <p class="next-page"><a href="/pragmatic/questions/"><span class="np-label">Next</span> <span class="np-title">Questions</span></a></p>
+
+    </main>
+
+    <footer class="pf-colophon">
+        <div class="pfc-inner">
+            <div class="pfc-cta">
+                <p class="pfc-line">Tell us what <em>you&rsquo;re building.</em></p>
+                <a class="pfc-cta-link" href="mailto:me@aniketh.net?subject=Pragmatic design partner">Become a design partner</a>
             </div>
-            <div class="f-rule"></div>
-            <div class="f-main">
-                <div class="f-brand">
-                    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>
-                    <span>Pragmatic</span>
+
+            <div class="pfc-main">
+                <div class="pfc-brand">
+                    <p class="pfc-strut pfc-word"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect class="sq" width="100" height="100"/><rect class="dm" x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/></svg>Pragmatic</p>
+                    <p class="pfc-row pfc-desc">The system of record <em>for AI agents.</em></p>
+                    <p class="pfc-row pfc-license"><span>Open source under Apache 2.0 from 0.5</span></p>
                 </div>
-                <div class="f-cols">
-                    <div class="f-col">
-                        <span class="f-head">Explore</span>
-                        <a href="/pragmatic/">Overview</a>
-                        <a href="/pragmatic/runtime/">The runtime</a>
-                        <a href="/pragmatic/docs/">Docs</a>
-                        <a href="/pragmatic/practice/">In practice</a>
-                        <a href="/pragmatic/newsroom/">Newsroom</a>
-                        <a href="/pragmatic/questions/">Questions</a>
+
+                <nav class="pfc-nav" aria-label="Footer">
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-product"><span>Product</span></h2>
+                        <ul role="list" aria-labelledby="pfc-product">
+                            <li><a href="/pragmatic/">Overview</a></li>
+                            <li><a href="/pragmatic/runtime/">How it works</a></li>
+                            <li><a href="/pragmatic/practice/">In practice</a></li>
+                            <li><a href="/pragmatic/docs/">Docs</a></li>
+                        </ul>
                     </div>
-                    <div class="f-col">
-                        <span class="f-head">Connect</span>
-                        <a href="mailto:me@aniketh.net">Email</a>
-                        <a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a>
-                        <a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a>
-                        <a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a>
-                        <a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a>
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-company"><span>Company</span></h2>
+                        <ul role="list" aria-labelledby="pfc-company">
+                            <li><a href="/pragmatic/questions/">Questions</a></li>
+                            <li><a href="/pragmatic/newsroom/">Newsroom</a></li>
+                            <li><a href="mailto:me@aniketh.net">Email</a></li>
+                        </ul>
                     </div>
-                </div>
+                    <div class="pfc-col">
+                        <h2 class="pfc-strut pfc-head" id="pfc-elsewhere"><span>Elsewhere</span></h2>
+                        <ul role="list" aria-labelledby="pfc-elsewhere">
+                            <li><a href="https://github.com/pragmaticco" target="_blank" rel="noopener">GitHub</a></li>
+                            <li><a href="https://www.linkedin.com/company/pragmaticco" target="_blank" rel="noopener">LinkedIn</a></li>
+                            <li><a href="https://x.com/pragmaticsys" target="_blank" rel="noopener">X</a></li>
+                            <li><a href="https://www.instagram.com/pragmaticsystems" target="_blank" rel="noopener">Instagram</a></li>
+                        </ul>
+                    </div>
+                </nav>
             </div>
-            <p class="f-copy">&copy; 2026 Pragmatic Research, Inc. All rights reserved.</p>
+
+            <div class="pfc-base">
+                <p class="pfc-copy">&copy; 2026 Pragmatic Research, Inc. <span>All rights reserved.</span></p>
+                <a class="pfc-top" href="#top">Back to top</a>
+            </div>
         </div>
     </footer>
 
+    <script src="/pragmatic/nav.js" defer></script>
     <script src="/pragmatic/pragmatic.js" defer></script>
 </body>
 </html>
