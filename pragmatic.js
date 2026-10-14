@@ -1114,7 +1114,7 @@
         el.classList.add('reveal');
         var p = el.parentElement;
         var n = perParent.get(p) || 0;
-        el.style.transitionDelay = Math.min(n * 110, 550) + 'ms';
+        el.style.transitionDelay = Math.min(n * 70, 280) + 'ms';
         perParent.set(p, n + 1);
     });
 
@@ -1129,6 +1129,6 @@
                 io.unobserve(e.target);
             }
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px 6% 0px' });
     els.forEach(function (el) { io.observe(el); });
 })();

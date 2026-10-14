@@ -80,7 +80,8 @@
     --t-hover: 0.18s;
     --t-line: 0.2s;
     --t-menu: 0.2s;
-    --t-reveal: 0.4s;
+    --t-reveal: 0.8s;
+    --reveal-ease: cubic-bezier(0.22, 0.61, 0.36, 1);   /* a soft ease-out: no pop */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2156,22 +2157,21 @@ pre:focus-visible { outline-color: var(--ivory-45); outline-offset: 6px; }
 
 /* ── Reveal animations ──
    Only for what starts below the fold; the cover is never hidden. Each
-   block rises 10px and is there as it comes into view: no waiting, and
-   no stagger between neighbours (the delay pragmatic.js writes on each
-   block is set aside here). */
+   block fades and rises 14px on a soft ease-out as it comes into view,
+   starting just before it enters, with a short stagger between
+   neighbours (pragmatic.js writes the delay on each block). */
 .reveal {
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity var(--t-reveal) var(--crisp),
-                transform var(--t-reveal) var(--crisp);
-    transition-delay: 0s !important;
+    transform: translateY(14px);
+    transition: opacity var(--t-reveal) var(--reveal-ease),
+                transform var(--t-reveal) var(--reveal-ease);
 }
 .reveal.on { opacity: 1; transform: none; }
 
 .running-head.reveal::before {
     opacity: 0;
     transform: rotate(45deg) scale(0);
-    transition: opacity var(--t-reveal) var(--crisp), transform var(--t-reveal) var(--crisp);
+    transition: opacity var(--t-reveal) var(--reveal-ease), transform var(--t-reveal) var(--reveal-ease);
 }
 .running-head.reveal.on::before { opacity: 1; transform: rotate(45deg) scale(1); }
 
