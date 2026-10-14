@@ -729,6 +729,16 @@ html.menu-open body { overflow: hidden; }
     padding-top: clamp(12px, 2vh, 40px);
     padding-bottom: clamp(16px, 3vh, 40px);
 }
+/* On a laptop or larger, the cover fills the first screen below the
+   header and its content sits in the middle of it. */
+@media (min-width: 900px) and (min-height: 600px) {
+    .cover {
+        min-height: calc(100vh - 80px);
+        min-height: calc(100svh - 80px);
+        display: flex;
+        align-items: center;
+    }
+}
 .cover-grid {
     width: 100%;
     display: grid;
@@ -1403,37 +1413,31 @@ html.menu-open body { overflow: hidden; }
     .pc .card { border-top: 1px solid var(--ink-12); box-shadow: none; }
     .pc .dl .ln { grid-template-columns: minmax(0, 80px) minmax(0, 1fr); }
 
-    /* Where the loop plays, the stage is the sheet alone, and the two
-       cards come in over its top, stacked, each a window of its own, the
-       width the console gives its side column where there is room, with
-       the sheet in a mist under them. */
+    /* Where the loop plays, the stage is the sheet alone: the camera's
+       close-up and pull-back happen on the sheet, and the two cards sit
+       below it, still and whole, never over the run. */
     @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
         .pc-stage { --fade-r: 88px; --dof-t: 21%; --dof-b: 25%; background: none; box-shadow: none; }
         .pc-sheet { box-shadow: var(--lift-1); }
         .pc-cards {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            bottom: auto;
-            width: min(var(--card), 100% - 24px);
+            position: static;
+            width: auto;
             display: grid;
             gap: 12px;
+            margin-top: 14px;
         }
-        .pc .card { border-top: 0; box-shadow: var(--lift-3); }
-        .pc-dof .mist {
-            display: block;
-            top: var(--lens-y);
-            left: var(--lens-l);
-            right: 0;
-            height: 60%;
-            opacity: 1;
-            visibility: visible;
-            background: linear-gradient(to bottom, rgba(249, 247, 241, 0.84) calc(100% - 72px), rgba(249, 247, 241, 0));
-            -webkit-backdrop-filter: blur(2px);
-            backdrop-filter: blur(2px);
-            -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
-            mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
+        .pc-cards .card {
+            border-top: 0;
+            box-shadow: var(--lift-1);
+            transform: none !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
+        .pc-dof .mist { display: none !important; }
+        /* No close-up on a phone: the narrow sheet is shown whole, so no
+           line is cut at the frame's edge; the playhead still walks it. */
+        .pc-sheet { transform: none !important; }
+        .pc-dof, .pc-ghost { display: none !important; }
     }
 }
 
