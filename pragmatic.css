@@ -614,7 +614,7 @@ html.menu-open body { overflow: hidden; }
         --glass-dark:  rgba(26, 23, 18, 0.3);        /* --ink */
         --glass-blur: blur(28px);
         /* Anchors, the skip link and keyboard focus land clear of it. */
-        scroll-padding-top: calc(var(--bar) + 24px);
+        scroll-padding-top: calc(var(--bar) + 28px);
     }
     body > header {
         position: sticky;
@@ -655,6 +655,10 @@ html.menu-open body { overflow: hidden; }
     body > header .menu > .cta {
         transition: color 0.2s var(--crisp), background-size var(--t-line) var(--crisp);
     }
+    /* On the glass the quiet pages are set a shade firmer, in the body
+       copy's ink, so they keep their contrast over a blurred headline. */
+    body > header[data-glass="paper"] nav a:not([aria-current]),
+    body > header[data-glass="thick"] nav a:not([aria-current]) { color: var(--ink-70); }
     body > header[data-glass="dark"] nav a { color: var(--ivory-75); }
     body > header[data-glass="dark"] nav a[aria-current],
     body > header[data-glass="dark"] .menu > .cta {
@@ -663,6 +667,8 @@ html.menu-open body { overflow: hidden; }
     }
 }
 @media (scripting: enabled) and (min-width: 900px) and (hover: hover) and (pointer: fine) {
+    body > header[data-glass="paper"] nav a:hover,
+    body > header[data-glass="thick"] nav a:hover { color: var(--ink); }
     body > header[data-glass="dark"] nav a:hover { color: var(--ivory); }
 }
 /* On a narrow screen the header is shorter, and held it tightens by as
@@ -1050,6 +1056,7 @@ html.menu-open body { overflow: hidden; }
     .pc .tl::before, .pc .cut-rail { left: 21px; }
     .pc .sum { padding: var(--rt) 16px var(--rb) 42px; }
     .pc .sum::before { left: 18px; }
+    .pc .mk-ring .sum::after { left: 15px; }
     .pc .mk-big .sum::before { left: 17px; }
     .pc .mk-aside .sum::before { left: 19px; }
     .pc .chain { padding: var(--ch-t) 16px var(--ch-b); }
@@ -1172,7 +1179,9 @@ html.menu-open body { overflow: hidden; }
 
 /* The playhead: a soft band that walks down the rows, the full width of
    the sheet. It runs on under the cards, so between them it meets the
-   sheet's own edge. */
+   sheet's own edge. pragmatic.js moves it to each row, and sizes it to
+   the row's height, by its transform alone (the band is flat, so a
+   scale draws exactly what a height would). */
 .pc .pc-head {
     position: absolute;
     z-index: 2;
@@ -1184,22 +1193,22 @@ html.menu-open body { overflow: hidden; }
     mix-blend-mode: multiply;
     opacity: 0;
     pointer-events: none;
+    transform-origin: 0 0;
     --step: cubic-bezier(0.3, 0, 0.1, 1);   /* leaves the row promptly, lands softly */
-    transition: transform 0.42s var(--step), height 0.42s var(--step), opacity 0.3s var(--ease), background-color 0.35s var(--ease);
+    transition: transform 0.42s var(--step), opacity 0.3s var(--ease), background-color 0.35s var(--ease);
 }
 .replay.is-live .pc-head.on { opacity: 1; }
 .pc .pc-head.is-jump { transition: none; }
 .pc .pc-head.alarm { background: rgb(251, 243, 238); }
 
-/* The crash: as the playhead reaches it, its rule swells once. */
-.replay.is-live .crash.hit::after { animation: pc-rule 0.8s var(--ease); }
-@keyframes pc-rule {
-    0%, 100% { transform: scaleX(1); }
-    30%      { transform: scaleX(2); }
-}
+/* The crash: as the playhead reaches it, its rule swells once
+   (pragmatic.js, on the rule's transform). */
 
 /* Attempt 2 reads the four finished steps back from the journal: each
-   glows in turn and its ring darkens, then settles. */
+   glows in turn and its ring darkens, then settles. The glow, and a dark
+   ring laid exactly over each step's hairline ring and over the
+   read-back mark in attempt 2's words, are faded in and out by
+   pragmatic.js (opacity alone); at rest they are not there. */
 .pc .mk-ring::after {
     content: '';
     position: absolute;
@@ -1212,31 +1221,31 @@ html.menu-open body { overflow: hidden; }
     opacity: 0;
     pointer-events: none;
 }
-.replay.is-live .mk-ring.glow::after { animation: pc-glow 0.8s var(--ease) both; animation-delay: var(--gd, 0s); }
-.replay.is-live .mk-ring.glow .sum::before { animation: pc-ring 0.8s var(--ease) both; animation-delay: var(--gd, 0s); }
-.replay.is-live .glow .dm.rb { animation: pc-rb 0.8s var(--ease) both; }
-@keyframes pc-glow { 0% { opacity: 0; } 28% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes pc-ring {
-    0%, 100% { box-shadow: 0 0 0 3px var(--leaf), 0 0 0 4px var(--ink-30); }
-    28%      { box-shadow: 0 0 0 3px var(--leaf), 0 0 0 4px var(--ink); }
+/* Each dark ring is drawn the way the hairline ring under it is, as a
+   box-shadow, so the two coincide to the pixel: a box the size of the
+   ring's inside, with a 1px spread. */
+.pc .mk-ring .sum::after,
+.pc i.dm.rb::after {
+    content: '';
+    position: absolute;
+    box-shadow: 0 0 0 1px var(--ink);
+    opacity: 0;
+    pointer-events: none;
 }
-@keyframes pc-rb {
-    0%, 100% { box-shadow: 0 0 0 2.5px var(--leaf), 0 0 0 3.5px var(--ink-30); }
-    28%      { box-shadow: 0 0 0 2.5px var(--leaf), 0 0 0 3.5px var(--ink); }
+.pc .mk-ring .sum::after {
+    left: 19px;
+    top: calc(var(--rt) + 5px);
+    width: 13px;
+    height: 13px;
+    transform: rotate(45deg);
 }
+.pc i.dm.rb { position: relative; }
+.pc i.dm.rb::after { inset: -2.5px; }
 
 /* The chain verifies, both timestamp services confirm, and the check
-   prints its result: each diamond swells once and settles. */
-.replay.is-live .hit > i.dm,
-.replay.is-live .op.hit > i { animation: pc-pop 0.65s var(--ease); }
-@keyframes pc-pop {
-    0%, 100% { transform: rotate(45deg) scale(1); }
-    35%      { transform: rotate(45deg) scale(1.75); }
-}
-
-/* The caption's diamond stays still, at full ink, and swells once as
-   each playback begins. */
-.replay.is-live .pc-pulse.hit { animation: pc-pop 0.65s var(--ease); }
+   prints its result: each diamond swells once and settles. The caption's
+   diamond stays still, at full ink, and swells once as each playback
+   begins. (pragmatic.js, on each diamond's transform.) */
 
 /* ── The camera ──
    The stage keeps the size of the whole composition, so nothing around
@@ -1263,32 +1272,53 @@ html.menu-open body { overflow: hidden; }
 }
 .pc-lens > .pc-sheet { transform-origin: 0 0; }
 
+/* While a move is set up and under way (.is-primed, from pragmatic.js),
+   the layers it moves are kept, so they are drawn once, ahead of it, and
+   not again on its first frame or its last. At rest they are let go, and
+   the page is drawn at its own size. The playhead is not kept: while it
+   has a layer of its own, its multiply blend makes the whole sheet be
+   drawn twice a frame, so it has one only for its own short moves. */
+.replay.is-primed .pc-lens > .pc-sheet { will-change: transform; }
+.replay.is-primed .pc .card { will-change: transform, opacity; }
+
 /* The depth of field. At the top and the foot of the frame the close-up
-   goes softly out of focus, three layers of blur, each stronger and
-   nearer the edge, and then into the paper. All of it is hidden until
-   the camera is close. */
+   goes softly out of focus, more so nearer the edge, and then into the
+   paper. Each band (made by pragmatic.js) holds a copy of the sheet,
+   blurred once as it is drawn and moved by the camera with the sheet,
+   under a static mask that ramps it in from nothing; over it, an eased
+   fade of paper. Only the bands' opacity changes. All of it is hidden
+   until the camera is close. */
 .pc-dof,
 .pc-reel { position: absolute; inset: 0; pointer-events: none; }
 .pc-dof i { position: absolute; left: 0; right: 0; opacity: 0; visibility: hidden; }
-.pc-dof .t1, .pc-dof .t2, .pc-dof .t3, .pc-dof .fade.t { top: 0; }
-.pc-dof .b1, .pc-dof .b2, .pc-dof .b3, .pc-dof .fade.b { bottom: 0; }
-.pc-dof .t1 { height: var(--dof-t); }
-.pc-dof .t2 { height: calc(var(--dof-t) * 0.68); }
-.pc-dof .t3 { height: calc(var(--dof-t) * 0.4); }
-.pc-dof .b1 { height: var(--dof-b); }
-.pc-dof .b2 { height: calc(var(--dof-b) * 0.68); }
-.pc-dof .b3 { height: calc(var(--dof-b) * 0.4); }
-.pc-dof .t1, .pc-dof .b1 { -webkit-backdrop-filter: blur(1.2px); backdrop-filter: blur(1.2px); }
-.pc-dof .t2, .pc-dof .b2 { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-.pc-dof .t3, .pc-dof .b3 { -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
-.pc-dof .t1, .pc-dof .t2, .pc-dof .t3 {
+.pc-dof .fade.t { top: 0; }
+.pc-dof .fade.b { bottom: 0; }
+/* While a band waits to come in, it is shown at a breath above nothing
+   (0.001, which no eye can see), so its copy is drawn and its blur and
+   mask are set up then, in a still moment, not on the frame it first
+   shows. At rest it is hidden. */
+.pc-ghost {
+    position: absolute;
+    left: 0;
+    right: 0;
+    overflow: clip;
+    pointer-events: none;
+    opacity: 0.001;
+    visibility: hidden;
+}
+.pc-ghost.t {
+    top: 0;
+    height: var(--dof-t);
     -webkit-mask-image: linear-gradient(to top, transparent, #000 55%);
     mask-image: linear-gradient(to top, transparent, #000 55%);
 }
-.pc-dof .b1, .pc-dof .b2, .pc-dof .b3 {
+.pc-ghost.b {
+    bottom: 0;
+    height: var(--dof-b);
     -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
     mask-image: linear-gradient(to bottom, transparent, #000 55%);
 }
+.pc-ghost-mover { position: absolute; transform-origin: 0 0; }
 /* The paper takes over along an eased curve, so the fade has no edge. */
 .pc-dof .fade.t,
 .pc-dof .fade.b {
@@ -1346,6 +1376,7 @@ html.menu-open body { overflow: hidden; }
     .pc-toggle { display: none; }
     .pc-cap .v-still { display: inline; }
     .pc-dof,
+    .pc-ghost,
     .pc-reel { display: none; }
 }
 
@@ -2332,7 +2363,8 @@ main:has(> .finale:last-child) + .pf-colophon .pfc-main { padding-top: 0; }
 }
 
 /* 1 · The invitation: the line across two thirds, the link on the
-   last third, sitting on the line's last baseline. */
+   last third, sitting on the line's last baseline and ending on the
+   right content edge, over Back to top. */
 .pfc-cta {
     align-items: baseline;
     align-items: last baseline;
@@ -2352,7 +2384,7 @@ main:has(> .finale:last-child) + .pf-colophon .pfc-main { padding-top: 0; }
 .pfc-cta-link {
     position: relative;
     grid-column: 9 / -1;
-    justify-self: start;
+    justify-self: end;
     font-style: italic;
     font-size: 20px;
     line-height: 1.3;
@@ -2463,12 +2495,13 @@ main:has(> .finale:last-child) + .pf-colophon .pfc-main { padding-top: 0; }
 
 /* 3 · The bottom bar: a closing running head, the copyright on the left
    and Back to top on the right content edge. The diamond that marks
-   every section on the page takes you back to the first one. Its line
-   sits halfway between the rule and the field's last row of diamonds. */
+   every section on the page takes you back to the first one. The line
+   sits as far below the rule as above the band's foot, halfway between
+   two rows of the diamond field, so no diamond runs through it. */
 .pfc-base {
     align-items: baseline;
     border-top: 1px solid var(--ivory-15);
-    padding: 16px 0 46px;
+    padding: 43px 0 44px;
 }
 .pfc-copy {
     grid-column: 1 / 9;
@@ -2511,17 +2544,20 @@ main:has(> .finale:last-child) + .pf-colophon .pfc-main { padding-top: 0; }
     .pfc-top:hover::before { transform: translateY(-3px) rotate(45deg); }
 }
 
-/* Tablet: the same logic on the page's thirds. The brand takes the
-   full first row and the three link columns fall on the thirds below
-   it; Back to top still ends on the right content edge. */
+/* Tablet: the same composition on the page's thirds. The brand keeps
+   the first third, its tagline set in two lines on the links' leading
+   (the italic half on the second), and the three link columns share
+   the other two thirds. */
 @media (max-width: 999px) {
     .pfc-cta,
     .pfc-main,
     .pfc-base { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .pfc-line { grid-column: 1 / 3; }
     .pfc-cta-link { grid-column: 3 / -1; }
-    .pfc-brand { grid-column: 1 / -1; margin-bottom: 48px; }
-    .pfc-nav { grid-column: 1 / -1; }
+    .pfc-brand { grid-column: 1 / 2; }
+    .pfc-desc em { display: block; }
+    .pfc-license { margin-top: 15px; line-height: 24px; text-wrap: balance; }
+    .pfc-nav { grid-column: 2 / -1; }
     .pfc-copy { grid-column: 1 / 3; }
     .pfc-top { grid-column: 3 / -1; }
 }
@@ -2550,16 +2586,20 @@ main:has(> .finale:last-child) + .pf-colophon .pfc-main { padding-top: 0; }
     .pfc-cta { padding-bottom: 44px; }
     .pfc-cta-link { grid-column: 1 / -1; justify-self: start; margin-top: 22px; font-size: 18px; }
     .pfc-main { padding: 40px 0 48px; }
-    .pfc-brand { margin-bottom: 40px; }
+    .pfc-brand { grid-column: 1 / -1; margin-bottom: 40px; }
+    .pfc-desc em { display: inline; }
+    .pfc-nav { grid-column: 1 / -1; }
     .pfc-word .mark { width: 20px; height: 20px; margin-right: 12px; }
     .pfc-license { font-size: 15px; }
     .pfc-head span { font-size: 16px; }
+    .pfc-base { padding: 28px 0 40px; }
     .pfc-copy { font-size: 14px; }
     .pfc-top { font-size: 15px; }
     .pfc-top::before { margin-right: 11px; }
     .np-title { font-size: 24px; }
     /* The type fills a phone's footer, leaving room for only a few stray
-       rows of the diamond field, so the band is plain ink here. */
+       rows of the diamond field, and there is no pointer to swell it, so
+       the band is plain ink here. */
     .pfc-grid { display: none; }
 }
 
@@ -2620,7 +2660,7 @@ section.doc > * {
     grid-row: 1 / span 40;
     align-self: start;
     position: sticky;
-    top: calc(var(--bar) + 24px);   /* clear of the held header, where an anchor lands */
+    top: calc(var(--bar) + 28px);   /* clear of the held header, where an anchor lands */
     margin: 0;
     align-items: baseline;
 }

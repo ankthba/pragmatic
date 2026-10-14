@@ -136,3 +136,93 @@
         if (e.persisted) close(false);
     });
 })();
+
+// The header, held at the top of the window (see "The header, held at
+// the top" in pragmatic.css). Nothing here listens to the scroll. A
+// marker at the very top of the page says whether the page has moved,
+// and the page's dark parts (the dark bands, the footer and the code
+// blocks) are watched through thin strips of the window where the
+// header is held: the whole of it, its top edge and its foot. From what
+// lies beneath, the header's glass is
+//   clear  at the top of the page,
+//   dark   while a dark band covers it from edge to edge,
+//   thick  while a dark edge passes beneath the words, or a code block
+//          lies under part of the row,
+//   paper  everywhere else.
+(function () {
+    var header = document.querySelector('body > header');
+    if (!header || !('IntersectionObserver' in window) || !window.Set) return;
+
+    var list = function (selector) {
+        return Array.prototype.slice.call(document.querySelectorAll(selector));
+    };
+    var bands = list('.dark-section, .pf-colophon');
+    var spots = list('.doc-code');
+    var isBand = new Set(bands);
+
+    var moved = false;
+    var under = new Set();        // dark parts anywhere beneath the glass
+    var acrossTop = new Set();    // bands across its top edge
+    var acrossFoot = new Set();   // bands across its foot
+
+    var show = function () {
+        var glass = 'clear';
+        if (moved) {
+            glass = 'paper';
+            under.forEach(function (el) {
+                if (glass === 'thick') return;
+                glass = isBand.has(el) && acrossTop.has(el) && acrossFoot.has(el) ? 'dark' : 'thick';
+            });
+        }
+        if (header.getAttribute('data-glass') !== glass) header.setAttribute('data-glass', glass);
+    };
+
+    // The strips are measured from the held glass: the header's height,
+    // less what it rises before it holds and what the glass stops short.
+    var watchers = [];
+    var measured = '';
+    var watchStrip = function (seen, targets, top, foot, height) {
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target);
+            });
+            show();
+        }, { rootMargin: (-top) + 'px 0px ' + (-(height - foot)) + 'px 0px' });
+        targets.forEach(function (el) { io.observe(el); });
+        watchers.push(io);
+    };
+    var watch = function () {
+        var style = getComputedStyle(header);
+        var bar = Math.round(header.getBoundingClientRect().height
+            - (parseFloat(style.getPropertyValue('--hdr-tuck')) || 0)
+            - (parseFloat(style.getPropertyValue('--hdr-trim')) || 0));
+        var height = window.innerHeight;
+        if (measured === bar + ':' + height) return;
+        measured = bar + ':' + height;
+        watchers.forEach(function (io) { io.disconnect(); });
+        watchers = [];
+        under.clear();
+        acrossTop.clear();
+        acrossFoot.clear();
+        watchStrip(under, bands.concat(spots), 0, bar, height);
+        watchStrip(acrossTop, bands, 0, 1, height);
+        watchStrip(acrossFoot, bands, bar - 1, bar, height);
+    };
+    watch();
+
+    var marker = document.createElement('div');
+    marker.className = 'hdr-marker';
+    marker.setAttribute('aria-hidden', 'true');
+    document.body.insertBefore(marker, document.body.firstChild);
+    new IntersectionObserver(function (entries) {
+        moved = !entries[entries.length - 1].isIntersecting;
+        show();
+    }).observe(marker);
+
+    var pending = 0;
+    window.addEventListener('resize', function () {
+        clearTimeout(pending);
+        pending = setTimeout(watch, 120);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(watch);
+})();

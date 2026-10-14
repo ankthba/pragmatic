@@ -179,19 +179,28 @@
     //   which is worked out as the page is viewed;
     // - the finished page holds, and the loop begins again.
     // On a narrow screen the cards come in over the top of the sheet, once
-    // the steps have been read back. A page that has just opened starts on
-    // the finished page, as written in the HTML, so nothing jumps.
+    // the steps have been read back. A page that has just opened shows the
+    // finished page, as written in the HTML, and goes straight into the
+    // first move: the cards leave as the camera goes in, and the first row
+    // lights as the camera settles on it.
     //
-    // It holds where it is, like a paused film, while the pointer is over
-    // the console or its caption, while the console is mostly off-screen
-    // or the tab is hidden, and from the Pause button in the caption. The
-    // button's word changes only when the visitor presses it. With reduced
-    // motion it never plays.
+    // It holds where it is, like a paused film, while the console is
+    // mostly off-screen or the tab is hidden, and from the Pause button in
+    // the caption. The button's word changes only when the visitor presses
+    // it. With reduced motion it never plays.
     //
-    // The camera, the cards and the soft focus move with the Web
-    // Animations API on transform and opacity only, so they run on the
-    // compositor; the camera rests, untransformed, on the whole page, so
-    // the page is drawn at its own size while it holds.
+    // Smoothness. Everything that moves is animated on transform and
+    // opacity only, with the Web Animations API or a CSS transition, so it
+    // runs on the compositor and never waits on the page's own thread; no
+    // layout is read or written while it plays. The camera's moves and the
+    // cards' are set up ahead, in a still moment: their animations are made
+    // a little before they start, with start times fixed on the loop's
+    // clock, and the layers they move are kept (will-change), so the
+    // close-up is drawn at its full size before the first frame of the
+    // move, not during it. Once the camera and the cards are at rest and
+    // nothing moves, the layers are let go and the page is drawn again at
+    // its own size, so its type is crisp while it holds. The soft focus is
+    // one blur for each band, under static masks, that only fades.
     // Its own scope: the footer below declares names of its own.
     (function () {
         var replay = document.querySelector('.replay');
@@ -212,13 +221,15 @@
         // 6 its reply · 7 its end
         var rows = all('.rows > li');
         var CRASH = 4, RESUME = 5;
-        var chainMark = one('.chain');
-        var result = one('.dl .res .dd');
-        var ops = all('.op');
+        var rings = rows.slice(0, 4).map(function (r) { return r.querySelector('.sum'); });
+        var readBackMark = one('.dm.rb');
+        var chainMark = one('.chain > i.dm');
+        var result = one('.dl .res .dd > i.dm');
+        var ops = all('.op > i');
         var pulse = one('.pc-pulse');
         var anchorCard = one('.card.anchor');
         var checkCard = one('.card.check');
-        var dof = all('.pc-dof i:not(.edge):not(.mist)');
+        var fades = all('.pc-dof .fade');
         var edgeTop = one('.pc-dof .edge.top');
         var edgeFoot = one('.pc-dof .edge.foot');
         var edgeRight = one('.pc-dof .edge.right');
@@ -227,44 +238,86 @@
         var cardsBox = one('.pc-cards');
         var reelBox = one('.pc-reel');
         var reel = one('.pc-reel video');
-        var moved = rows.concat(chainMark, result, ops, pulse);
 
-        // A one-off swell: restart the animation even if it ran before.
-        var hit = function (el) {
-            if (!el) return;
-            el.classList.remove('hit');
-            void el.offsetWidth;
-            el.classList.add('hit');
+        // The soft focus at the top and the foot of the close-up: in each
+        // band, a copy of the sheet, blurred once as it is drawn, that the
+        // camera moves exactly as it moves the sheet, under a static mask
+        // that ramps it in from nothing. Nothing is blurred again while it
+        // plays; the band only fades in and out. (A live backdrop blur
+        // over the moving sheet would be worked out again on every frame.)
+        // The copies are made once, when the playback first starts.
+        var ghosts = [];
+        var makeGhosts = function () {
+            if (ghosts.length) return;
+            ['t', 'b'].forEach(function (side) {
+                var band = document.createElement('div');
+                band.className = 'pc-ghost ' + side;
+                var mover = document.createElement('div');
+                mover.className = 'pc-ghost-mover';
+                var copy = sheet.cloneNode(true);
+                copy.classList.add('pc-ghost-sheet');
+                mover.appendChild(copy);
+                band.appendChild(mover);
+                lens.insertBefore(band, reelBox);
+                ghosts.push({ band: band, mover: mover, copy: copy });
+            });
         };
+        var dof = function () { return fades.concat(ghosts.map(function (g) { return g.band; })); };
 
-        // The playhead sits on one row at a time.
-        var at = -1;
+        // The page's own easing, for the one-off moments below.
+        var EASE = (getComputedStyle(document.documentElement).getPropertyValue('--ease') || '').trim() || 'cubic-bezier(0.2, 0.6, 0.2, 1)';
+        // A one-off swell, peaking at "peak" of the way through: each step
+        // eases, as a CSS keyframe animation's would.
+        var swellOf = function (from, to, peak) {
+            return [{ transform: from, easing: EASE }, { transform: to, offset: peak, easing: EASE }, { transform: from }];
+        };
+        var POP = swellOf('rotate(45deg) scale(1)', 'rotate(45deg) scale(1.75)', 0.35);
+        var RULE = swellOf('scaleX(1)', 'scaleX(2)', 0.3);
+        var GLOW = [{ opacity: 0, easing: EASE }, { opacity: 1, offset: 0.28, easing: EASE }, { opacity: 0 }];
+        var pop = function (el) { if (el) el.animate(POP, { duration: 650 }); };
+
+        // The playhead sits on one row at a time. Where each row is, and
+        // how tall, is measured with the rest of the geometry, never while
+        // it plays; the band is moved and sized by its transform alone.
+        var at = -1, rowY = [], rowH = [], headH = 1;
+        var measureRows = function () {
+            rowY = rows.map(function (r) { return r.offsetTop; });
+            rowH = rows.map(function (r) { return r.offsetHeight; });
+            headH = head.offsetHeight || 1;
+        };
         var place = function (jump) {
             if (at < 0) return;
             if (jump) head.classList.add('is-jump');
-            head.style.height = rows[at].offsetHeight + 'px';
-            head.style.transform = 'translateY(' + rows[at].offsetTop + 'px)';
+            head.style.transform = 'translateY(' + rowY[at] + 'px) scaleY(' + (rowH[at] / headH).toFixed(4) + ')';
             head.classList.toggle('alarm', at === CRASH);
-            if (jump) { void head.offsetWidth; head.classList.remove('is-jump'); }
+            // Land on the row without sliding there: settle the style, then
+            // let the next move transition again.
+            if (jump) { void getComputedStyle(head).transform; head.classList.remove('is-jump'); }
         };
         var read = function (i) {
             at = i;
             place(!head.classList.contains('on'));
             head.classList.add('on');
-            if (i === CRASH) hit(rows[i]);
+            if (i === CRASH) rows[i].animate(RULE, { duration: 800, pseudoElement: '::after' });
         };
         var lift = function () { head.classList.remove('on'); at = -1; };
 
-        // Attempt 2's start: the four steps it read back glow in turn.
-        for (var g = 0; g < 4; g++) rows[g].style.setProperty('--gd', (g * 0.1) + 's');
+        // Attempt 2's start: the four steps it read back glow in turn, and
+        // their rings and the read-back mark in its words darken, then settle.
         var readBack = function () {
-            for (var i = 0; i < 4; i++) rows[i].classList.add('glow');
-            rows[RESUME].classList.add('glow');
+            for (var i = 0; i < 4; i++) {
+                rows[i].animate(GLOW, { duration: 800, delay: i * 100, pseudoElement: '::after' });
+                if (rings[i]) rings[i].animate(GLOW, { duration: 800, delay: i * 100, pseudoElement: '::after' });
+            }
+            if (readBackMark) readBackMark.animate(GLOW, { duration: 800, pseudoElement: '::after' });
         };
 
-        // Clear every passing effect: the page as it ended.
+        // Clear every passing moment: the page as it ended.
         var settle = function () {
-            moved.forEach(function (el) { if (el) el.classList.remove('glow', 'hit'); });
+            if (!replay.getAnimations) return;
+            replay.getAnimations({ subtree: true }).forEach(function (a) {
+                if (a.constructor === Animation && !a.id) a.cancel();
+            });
         };
 
         // Curves. Every move leaves its start promptly and lands softly,
@@ -297,6 +350,7 @@
         // brisk but never hurried. Comments give each row's time in the
         // journal (UTC, 14 Oct 2026).
         var LOOP = 12500;
+        var LEAD = 300;                           // a move is set up this far ahead, while all is still
         var T = {
             out: 0, outGap: 120, outD: 450,       // the check leaves, then the anchor
             zin: 300, zinD: 1300,                 // the camera goes in
@@ -307,27 +361,31 @@
             dofOutD: 700,
             enter: 5550, enterGap: 130, enterD: 650,     // the anchor, then the check, come in
             enterNarrow: 6250,                    // on a narrow screen, once the steps are read back
-            boot: 10100                           // a page that has just opened starts here
+            rest: 6700, restNarrow: 7300,         // all at rest and nothing moving: the layers are let go
+            first: 1250                           // just opened: the first row lights as the camera settles
         };
         var PLAN = [
-            [0,     function (late) { settle(); lift(); startCards(late); }],
-            [T.zin, function (late) { startCamera(late); }],
-            [T.dofIn, function (late) { startDof(late); startReel(late); }],
-            [T.pulse, function () { hit(pulse); }],
-            [1600,  function () { read(0); }],                      // 04:23:34.106 model call
-            [2250,  function () { read(1); }],                      // 04:23:35.030 tool call
-            [2750,  function () { read(2); }],                      // 04:23:35.197 model call
-            [3350,  function () { read(3); }],                      // 04:23:36.110 tool call, then the process is killed
-            [4000,  function () { read(CRASH); }],                  // attempt 1 has no end
-            [4900,  function () { read(RESUME); }],                 // 04:24:47.548 attempt 2 starts
-            [5300,  readBack],
-            [6250,  function () { read(6); }],                      // 04:24:47.563 model call
-            [6850,  function () { read(7); }],                      // 04:24:48.475 attempt 2 ends ok
-            [7450,  function () { lift(); hit(chainMark); }],       // the chain verifies
-            [7950,  function () { hit(ops[0]); }],                  // 04:24:53, DigiCert
-            [8350,  function () { hit(ops[1]); }],                  // and Sectigo
-            [8950,  function () { hit(result); }],                  // the check's result, as the page is viewed
-            [LOOP,  null]                                           // and again
+            [0,       function () { settle(); lift(); }],
+            [T.dofIn, function () { playReel(clock()); }],
+            [T.first, function () { if (opening) read(0); }],
+            [T.pulse, function () { pop(pulse); }],
+            [1600,    function () { if (!opening) read(0); }],     // 04:23:34.106 model call
+            [2250,    function () { read(1); }],                   // 04:23:35.030 tool call
+            [2750,    function () { read(2); }],                   // 04:23:35.197 model call
+            [3350,    function () { read(3); }],                   // 04:23:36.110 tool call, then the process is killed
+            [4000,    function () { read(CRASH); }],               // attempt 1 has no end
+            [4900,    function () { read(RESUME); }],              // 04:24:47.548 attempt 2 starts
+            [5300,    readBack],
+            [6250,    function () { read(6); }],                   // 04:24:47.563 model call
+            [T.rest,  function () { if (!G.narrow) rest(); }],
+            [6850,    function () { read(7); }],                   // 04:24:48.475 attempt 2 ends ok
+            [T.restNarrow, function () { if (G.narrow) rest(); }],
+            [7450,    function () { lift(); pop(chainMark); }],    // the chain verifies
+            [7950,    function () { pop(ops[0]); }],               // 04:24:53, DigiCert
+            [8350,    function () { pop(ops[1]); }],               // and Sectigo
+            [8950,    function () { pop(result); }],               // the check's result, as the page is viewed
+            [LOOP - LEAD, function () { prepare(LOOP, false); }],  // the next loop's first moves, set up
+            [LOOP,    null]                                        // and again
         ];
 
         // Where things are, in the stage's own pixels, measured from the
@@ -366,6 +424,18 @@
             // The sheet's own top and foot never come into the close-up.
             var lo = (focus - top) / S, hi = (focus - bottom + S * H) / S;
             var keep = function (y) { return Math.min(hi, Math.max(lo, y)); };
+            measureRows();
+            // Each band's copy of the sheet lies exactly over the sheet, as
+            // wide, and is blurred by as much, at the close-up's scale, as a
+            // 2.6px blur of the frame.
+            var at0 = ghosts.map(function (g) { return [sheet.offsetLeft - g.band.offsetLeft, sheet.offsetTop - g.band.offsetTop]; });
+            var w0 = sheet.offsetWidth;
+            ghosts.forEach(function (g, i) {
+                g.mover.style.left = at0[i][0] + 'px';
+                g.mover.style.top = at0[i][1] + 'px';
+                g.copy.style.width = w0 + 'px';
+                g.copy.style.filter = 'blur(' + (2.6 / S).toFixed(2) + 'px)';
+            });
             // The paper under the caption: from a little above it to the
             // foot of the frame.
             edgeFoot.style.height = (bottom - capTop + 28).toFixed(1) + 'px';
@@ -389,18 +459,26 @@
             };
         };
 
-        // Every move is one animation, sampled from the curves above.
+        // Every move is one animation, sampled from the curves above, and
+        // "t" below is always the loop's clock: a move made ahead is given
+        // a negative current time, and waits, drawn but unseen, until its
+        // start.
         var films = {};
         var running = false;
         // Only transform and opacity are animated, so every move can run on
-        // the compositor. A layer of the soft focus, hidden at rest, is
-        // shown for as long as its animation lasts.
-        var run = function (key, el, frames, dur, late) {
+        // the compositor. Its start is pinned to the clock itself (the
+        // document's timeline shares its origin with performance.now), not
+        // to whichever frame comes next. A layer of the soft focus, hidden
+        // at rest, is shown for as long as its animation lasts (at nothing
+        // while it waits to start).
+        var run = function (key, el, frames, dur, time) {
             if (films[key]) films[key].cancel();
             var a = el.animate(frames, { duration: dur, easing: 'linear', fill: 'none' });
-            a.currentTime = Math.min(dur, late || 0);   // before its start, it waits
-            if (!running) a.pause();
-            var shown = el.closest('.pc-dof, .pc-reel');
+            a.id = 'pc-' + key;
+            time = Math.min(dur, time);
+            if (running) a.startTime = performance.now() - time;
+            else { a.pause(); a.currentTime = time; }
+            var shown = el.closest('.pc-dof, .pc-reel, .pc-ghost');
             if (shown) el.style.visibility = 'visible';
             var done = function () {
                 if (films[key] !== a) return;
@@ -440,9 +518,12 @@
             for (i = 0; i <= N; i++) add(T.zout + i / N * T.zoutD);
             return K;
         };
-        var startCamera = function (late) {
-            run('camera', sheet, cameraFrames(), T.zout + T.zoutD - T.zin, late);
-            startEdges(late);
+        // The sheet's copies in the soft bands move with it, frame for frame.
+        var startCamera = function (t) {
+            var K = cameraFrames(), D = T.zout + T.zoutD - T.zin;
+            run('camera', sheet, K, D, t - T.zin);
+            ghosts.forEach(function (g, i) { run('ghost' + i, g.mover, K, D, t - T.zin); });
+            startEdges(t);
         };
         // Each soft edge of the frame is there from just before the sheet
         // runs past it, going in, until just after it is back inside,
@@ -456,30 +537,30 @@
             ['edgeRight', edgeRight, function (c) { return c.s * G.W0 > G.W + 1; }],
             ['edgeVeil', edgeVeil, function (c) { return G.tmL > 0 && c.s * G.tmR > G.W - 8 && c.s * G.tmL < G.W; }]
         ];
-        var startEdges = function (late) {
+        var startEdges = function (t) {
             var t0 = T.zin, t1 = T.zout + T.zoutD + 400, D = t1 - t0;
             edges.forEach(function (e) {
                 // When the sheet runs past this edge, as spans of time.
-                var spans = [], t, on, from = null;
-                for (t = t0; t <= t1; t += 10) {
-                    on = e[2](camAt(t));
-                    if (on && from == null) from = t;
-                    if (!on && from != null) { spans.push([from, t]); from = null; }
+                var spans = [], s, on, from = null;
+                for (s = t0; s <= t1; s += 10) {
+                    on = e[2](camAt(s));
+                    if (on && from == null) from = s;
+                    if (!on && from != null) { spans.push([from, s]); from = null; }
                 }
                 if (from != null) spans.push([from, t1]);
                 for (var i = spans.length - 1; i > 0; i--) {
                     if (spans[i][0] - spans[i - 1][1] < 700) { spans[i - 1][1] = spans[i][1]; spans.splice(i, 1); }
                 }
                 var K = [{ offset: 0, opacity: 0 }];
-                var at = function (x) { return Math.min(1, Math.max(K[K.length - 1].offset, (x - t0) / D)); };
+                var off = function (x) { return Math.min(1, Math.max(K[K.length - 1].offset, (x - t0) / D)); };
                 spans.forEach(function (sp) {
-                    K.push({ offset: at(sp[0] - 240), opacity: 0 });
-                    K.push({ offset: at(sp[0]), opacity: 1 });
-                    K.push({ offset: at(sp[1] + 60), opacity: 1 });
-                    K.push({ offset: at(sp[1] + 360), opacity: 0 });
+                    K.push({ offset: off(sp[0] - 240), opacity: 0 });
+                    K.push({ offset: off(sp[0]), opacity: 1 });
+                    K.push({ offset: off(sp[1] + 60), opacity: 1 });
+                    K.push({ offset: off(sp[1] + 360), opacity: 0 });
                 });
                 K.push({ offset: 1, opacity: 0 });
-                if (e[1]) run(e[0], e[1], K, D, late);
+                if (e[1]) run(e[0], e[1], K, D, t - t0);
             });
         };
 
@@ -491,20 +572,23 @@
             for (i = 0; i <= N; i++) { p = i / N; K.push({ offset: (T.zout - t0 + p * T.dofOutD) / D, opacity: 1 - smooth(0, 1, p) }); }
             return K;
         };
-        var startDof = function (late) {
+        var startDof = function (t) {
             var K = dofFrames(), D = T.zout + T.dofOutD - T.dofIn;
-            dof.forEach(function (el, i) { run('dof' + i, el, K, D, late); });
+            dof().forEach(function (el, i) { run('dof' + i, el, K, D, t - T.dofIn); });
+            if (reel) run('reel', reelBox, K, D, t - T.dofIn);
         };
         // Filmed footage, if the reel has any, plays for the close-up.
-        var startReel = function (late) {
-            if (!reel) return;
-            run('reel', reelBox, dofFrames(), T.zout + T.dofOutD - T.dofIn, late);
-            try { reel.currentTime = Math.max(0, (late || 0) / 1000); } catch (e) {}
+        var playReel = function (t) {
+            if (!reel || !films.reel) return;
+            try { reel.currentTime = Math.max(0, (t - T.dofIn) / 1000); } catch (e) {}
             if (running) { var p = reel.play(); if (p && p.catch) p.catch(function () {}); }
         };
 
         // The cards: each leaves, sinking a little and fading, and comes
-        // back, rising into its place, the reverse of how it left.
+        // back, rising into its place, the reverse of how it left. They
+        // leave at the loop's start, or, on a page that has just opened,
+        // as the camera goes in.
+        var cardLeave = T.out;
         var cardFrames = function (leave, enter) {
             var t1 = enter + T.enterD, D = t1 - leave, K = [], N = 20, i, p, e;
             var add = function (t, o, d) {
@@ -514,30 +598,47 @@
             for (i = 0; i <= N; i++) { p = i / N; e = 1 - RISE(p); add(enter + p * T.enterD, smooth(0, 0.75, p), e); }
             return { K: K, D: D };
         };
-        var startCards = function (late) {
+        var startCards = function (t) {
             var enter = G.narrow ? T.enterNarrow : T.enter;
-            var c = cardFrames(T.out, enter + T.enterGap);
-            run('check', checkCard, c.K, c.D, late);
-            var a = cardFrames(T.out + T.outGap, enter);
-            run('anchor', anchorCard, a.K, a.D, (late || 0) - T.outGap);
+            var c = cardFrames(cardLeave, enter + T.enterGap);
+            run('check', checkCard, c.K, c.D, t - cardLeave);
+            var a = cardFrames(cardLeave + T.outGap, enter);
+            run('anchor', anchorCard, a.K, a.D, t - cardLeave - T.outGap);
             if (G.narrow) {
                 // The sheet clears as the cards leave, and mists over again
                 // just before they come back.
-                var D = c.D, o = function (t) { return (t - T.out) / D; };
+                var D = c.D, o = function (x) { return (x - cardLeave) / D; };
                 run('mist', mist, [
                     { offset: 0, opacity: 1 },
-                    { offset: o(T.out + 250), opacity: 1 },
-                    { offset: o(T.out + 850), opacity: 0 },
+                    { offset: o(cardLeave + 250), opacity: 1 },
+                    { offset: o(cardLeave + 850), opacity: 0 },
                     { offset: o(enter - 300), opacity: 0 },
                     { offset: o(enter + 200), opacity: 1 },
                     { offset: 1, opacity: 1 }
-                ], D, late);
+                ], D, t - cardLeave);
             } else if (films.mist) { films.mist.cancel(); delete films.mist; }
         };
 
-        // When the page is laid out again (a resize, the type arriving),
-        // each move in progress is measured again and carries on from the
-        // same moment.
+        // A loop's first moves, set up ahead: "from" is the loop's start on
+        // the clock (this loop's, as a page opens, or the next one's). The
+        // layers that will move are kept from now until all is at rest
+        // (will-change, by .is-primed), and each move's animation is made
+        // now, waiting for its own start, so everything the close-up needs
+        // is drawn while nothing on screen moves.
+        var opening = false;
+        var prepare = function (from, first) {
+            var t = clock() - from;
+            replay.classList.add('is-primed');
+            cardLeave = first ? T.zin : T.out;
+            startCards(t);
+            startCamera(t);
+            startDof(t);
+        };
+        var rest = function () { replay.classList.remove('is-primed'); };
+
+        // When the page is laid out again (a resize), each move in
+        // progress, or waiting to start, is measured again and carries on
+        // from the same moment.
         var rebuild = function () {
             if (!live) return;
             var before = {};
@@ -545,9 +646,9 @@
                 before[key] = { t: films[key].currentTime, paused: films[key].playState === 'paused' };
             });
             G = measure();
-            var camKeys = ['camera', 'edgeTop', 'edgeFoot', 'edgeRight', 'edgeVeil'];
+            var camKeys = ['camera', 'ghost0', 'ghost1', 'edgeTop', 'edgeFoot', 'edgeRight', 'edgeVeil'];
             var tc = null;
-            camKeys.forEach(function (key) { if (before[key] && tc == null) tc = before[key].t; });
+            camKeys.forEach(function (key) { if (before[key] && tc == null) tc = before[key].t + T.zin; });
             if (tc != null) {
                 startCamera(tc);
                 camKeys.forEach(function (key) {
@@ -556,7 +657,7 @@
                 });
             }
             if (before.check || before.anchor || before.mist) {
-                var t = before.check ? before.check.t : before.mist ? before.mist.t : (before.anchor.t + T.outGap);
+                var t = (before.check ? before.check.t : before.mist ? before.mist.t : (before.anchor.t + T.outGap)) + cardLeave;
                 startCards(t);
                 ['check', 'anchor', 'mist'].forEach(function (key) {
                     if (!before[key] && films[key]) { films[key].cancel(); delete films[key]; }
@@ -571,27 +672,31 @@
                 if (pending) return;
                 pending = requestAnimationFrame(function () { pending = 0; rebuild(); });
             }).observe(lens);
-            new ResizeObserver(function () { place(true); }).observe(tl);
+            new ResizeObserver(function () { if (live) { measureRows(); place(true); } }).observe(tl);
         }
 
         // One timer at a time, on a clock that stops while held. Every
         // animation in the console stops and starts with it.
         var next = 0, t0 = 0, now = 0, timer = 0;
+        var clock = function () { return running ? performance.now() - t0 : now; };
         var tick = function () {
             timer = 0;
-            var clock = performance.now();
-            now = clock - t0;
+            now = performance.now() - t0;
             while (next < PLAN.length && PLAN[next][0] <= now) {
-                var fn = PLAN[next][1], late = now - PLAN[next][0];
+                var fn = PLAN[next][1];
                 next += 1;
-                if (fn) fn(late);
+                if (fn) fn();
             }
-            if (next >= PLAN.length) { next = 0; t0 += LOOP; now -= LOOP; tick(); return; }
+            if (next >= PLAN.length) { next = 0; t0 += LOOP; now -= LOOP; opening = false; tick(); return; }
             timer = setTimeout(tick, Math.max(0, PLAN[next][0] - now));
         };
         var everything = function () {
             return replay.getAnimations ? replay.getAnimations({ subtree: true }) : Object.keys(films).map(function (k) { return films[k]; });
         };
+        // Held and let go on the clock too: each animation stops where the
+        // clock stops (not a frame later) and starts again with it. A move
+        // still waiting to start keeps its wait: play() would rewind it to
+        // its first frame and start it at once.
         var halt = function () {
             replay.classList.add('is-paused');
             if (!running) return;
@@ -599,46 +704,61 @@
             clearTimeout(timer);
             timer = 0;
             now = performance.now() - t0;
-            everything().forEach(function (a) { if (a.playState === 'running') a.pause(); });
+            var lag = performance.now() - (document.timeline.currentTime || performance.now());
+            everything().forEach(function (a) {
+                if (a.playState !== 'running') return;
+                var ct = a.currentTime;
+                a.pause();
+                if (ct != null) a.currentTime = ct + lag * (a.playbackRate || 1);
+            });
             if (reel) reel.pause();
         };
         var go = function () {
             replay.classList.remove('is-paused');
             if (running) return;
             running = true;
-            t0 = performance.now() - now;
-            everything().forEach(function (a) { if (a.playState === 'paused') a.play(); });
-            if (reel && films.reel) { var p = reel.play(); if (p && p.catch) p.catch(function () {}); }
+            var wall = performance.now();
+            t0 = wall - now;
+            everything().forEach(function (a) {
+                if (a.playState !== 'paused') return;
+                if (a.currentTime == null) a.play(); else a.startTime = wall - a.currentTime;
+            });
+            if (reel && films.reel && now >= T.dofIn) { var p = reel.play(); if (p && p.catch) p.catch(function () {}); }
             tick();
         };
 
-        var live = false, ready = false, seen = true, hovered = false, held = false;
+        var live = false, ready = false, seen = true, held = false;
         // The control says what pressing it will do, and only the visitor's
-        // own choice changes it: the pointer, scrolling and a hidden tab
-        // hold the playback quietly, so the word never changes under the
-        // pointer as it reaches for it.
+        // own choice changes it: scrolling away and a hidden tab hold the
+        // playback quietly, so the word never changes on its own.
         var label = function () {
             var word = held ? 'Play' : 'Pause';
             toggleWord.textContent = word;
             toggle.setAttribute('aria-label', word + ' the console playback');
         };
         var sync = function () {
-            if (live && ready && seen && !document.hidden && !hovered && !held) go(); else halt();
+            if (live && ready && seen && !document.hidden && !held) go(); else halt();
             label();
         };
         // It does what it says.
-        toggle.addEventListener('click', function () { held = !held; hovered = false; sync(); });
+        toggle.addEventListener('click', function () { held = !held; sync(); });
 
+        // A page that has just opened goes straight into the first move: the
+        // clock starts LEAD before the camera goes in, and the first moves,
+        // made now, begin then, the cards leaving as the camera goes in.
         var start = function () {
             if (live || still.matches) return;
             live = true;
+            makeGhosts();
             G = measure();
-            now = T.boot;
+            now = T.zin - LEAD;
             next = 0;
-            while (next < PLAN.length && PLAN[next][0] <= now) next += 1;
+            while (next < PLAN.length && PLAN[next][0] < now) next += 1;
             at = -1;
             held = false;
+            opening = true;
             replay.classList.add('is-live', 'is-paused');
+            prepare(0, true);
             sync();
         };
         var stop = function () {
@@ -646,18 +766,14 @@
             halt();
             live = false;
             Object.keys(films).forEach(function (key) { films[key].cancel(); });
-            all('.pc-dof i, .pc-reel').forEach(function (el) { el.style.visibility = ''; });
+            all('.pc-dof i, .pc-reel, .pc-ghost').forEach(function (el) { el.style.visibility = ''; });
             films = {};
             settle();
             lift();
-            replay.classList.remove('is-live', 'is-paused');
+            replay.classList.remove('is-live', 'is-paused', 'is-primed');
             label();
         };
 
-        // A pointer over the console or its caption holds it, so it can be
-        // read, and reaching for the control never sets it going again.
-        replay.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') { hovered = true; sync(); } });
-        replay.addEventListener('pointerleave', function () { if (hovered) { hovered = false; sync(); } });
         if ('IntersectionObserver' in window) {
             new IntersectionObserver(function (entries) {
                 var e = entries[entries.length - 1];
@@ -710,15 +826,16 @@
         // The grid: a sparse field of 2.5px diamonds that rises out of the
         // ink toward the foot of the band. Its pitch divides the content's
         // width, so columns of diamonds fall on both content edges; its rows
-        // are counted from the bottom bar's rule, which runs along one of
-        // them (no diamond sits on the rule itself), so the bottom bar's
-        // line sits halfway between two rows. A soft vertical mask takes
-        // the field from nothing at the band's middle to full strength at
-        // its last row, so the invitation and the top of the link columns
-        // sit on plain ink and nothing is ever cut out of the field: only a
-        // diamond that would fall right on a word is left out, where the
-        // word covers its place. No diamond comes within about half a pitch
-        // of the band's edges.
+        // are counted from the bottom bar's rule, which falls halfway between
+        // two of them. The stylesheet sets the bar's line about a pitch below
+        // the rule, halfway between the next two rows, so a row runs through
+        // the middle of the space under the link columns and none through
+        // the bar's type. A soft vertical mask takes the field from nothing
+        // at the band's middle to full strength at its last row, so the
+        // invitation and the top of the link columns sit on plain ink and
+        // nothing is ever cut out of the field: only a diamond that would
+        // fall right on a word is left out, where the word covers its place.
+        // No diamond comes within about half a pitch of the band's edges.
         var PITCH = 56;             // px; the pitch is the nearest even division of the content width
         var HALF = 1.25;            // half a resting diamond's width: 2.5px across
         var SWELL = 1.4;            // extra scale right under the pointer: 2.4x at the peak
@@ -818,14 +935,14 @@
             if (m.width > 0) p = m.width / Math.max(1, Math.round(m.width / PITCH));
             if (p < 44 || p > 72) p = PITCH;
             P = p;
-            var edge = p * 0.45;    // the field keeps this far from the band's edges
+            var edge = p * 0.4;     // the field keeps this far from the band's edges
 
             // Columns from the content's left edge.
             var k0 = Math.ceil((edge - m.left) / p - 1e-6);
             var k1 = Math.floor((W - edge - m.left) / p + 1e-6);
 
-            // Rows step out by the pitch from the bottom bar's rule.
-            var y0 = m.rules.length ? m.rules[m.rules.length - 1][0] : H - p / 2;
+            // Rows a pitch apart, the bottom bar's rule halfway between two.
+            var y0 = m.rules.length ? m.rules[m.rules.length - 1][0] - p / 2 : H - p / 2;
             var j0 = Math.ceil((edge - y0) / p - 1e-6);
             var j1 = Math.floor((H - edge - y0) / p + 1e-6);
 
@@ -842,8 +959,7 @@
                 for (var k = k0; k <= k1; k++) {
                     var x = m.left + k * p;
                     var skip = false, z, r;
-                    // No diamond sits on a rule; past the rule's ends, its row
-                    // carries on in the margins.
+                    // No diamond sits on a rule.
                     for (z = 0; z < m.rules.length && !skip; z++) {
                         r = m.rules[z];
                         skip = Math.abs(y - r[0]) < 6 && x > r[1] - 6 && x < r[2] + 6;
