@@ -56,6 +56,7 @@
         }
         .look .ir-fig img { border-radius: 6px; box-shadow: 0 0 0 1px var(--ink-12), 0 20px 50px -30px rgba(26, 23, 18, 0.4); }
         .ir-soon { font-family: var(--display); font-style: italic; font-size: 19px; color: var(--ink-64); }
+        .ir-marks { margin-top: var(--gap); max-width: 70ch; }
         .keys .index-row .v { font-family: var(--display); letter-spacing: 0.02em; }
         @media (max-width: 1279px) { .ir-shot { max-width: 960px; } }
     </style>
@@ -95,7 +96,7 @@
         <div class="cover-grid">
             <div class="cover-copy">
                 <h1>A browser for the Mac, <em class="nb">built on WebKit.</em></h1>
-                <p class="cover-deck">Spaces down the side, each with its own tabs and, if you like, its own profile. Chrome extensions, passwords in your Mac’s keychain, and ads and trackers blocked. The first time it opens, it brings over what you had in Arc, Dia, Chrome or Safari.</p>
+                <p class="cover-deck">Spaces down the side, each with its own tabs and, if you like, its own profile. Chrome extensions, passwords in your Mac’s keychain, and ads and trackers blocked. The first time it opens, it brings over what you had in Arc, Dia, Chrome, Safari and others.</p>
                 <div class="cover-links">
                     <span class="ir-soon">Coming soon</span>
                     <a class="lnk" href="#inside">See what’s in it</a>
@@ -103,8 +104,8 @@
                 <p class="cover-status">Free, for macOS 26 or later. No account to make. Made by <a href="/pragmatic/">Pragmatic</a>.</p>
             </div>
             <figure class="ir-shot">
-                <img src="/pragmatic/assets/iris/window-light.jpg" alt="Iris on a Mac, showing Wikipedia’s article on irises beside a glass sidebar of Spaces and tabs" width="2400" height="1500">
-                <figcaption class="caption">Wikipedia’s page on irises, in Iris. The sidebar is glass, so the desktop shows through, and the page runs edge to edge.</figcaption>
+                <img src="/pragmatic/assets/iris/window-light.jpg" alt="Iris on a Mac, showing Pragmatic’s website beside a glass sidebar of Spaces, folders and tabs" width="2400" height="1500">
+                <figcaption class="caption">Pragmatic’s own site, in Iris. The sidebar is glass, so the desktop shows through, and the page runs edge to edge.</figcaption>
             </figure>
         </div>
     </section>
@@ -119,9 +120,9 @@
                 <span class="v">100,000+</span>
             </div>
             <div class="index-row">
-                <span class="t">Browsers it imports from: Arc, Dia, Chrome and Safari</span>
+                <span class="t">Browsers it imports from, among them Arc, Dia, Chrome, Safari and Firefox</span>
                 <span class="dots"></span>
-                <span class="v">4</span>
+                <span class="v">8</span>
             </div>
             <div class="index-row">
                 <span class="t">Before a tab you haven’t looked at gives back its memory, and later wakes where it was</span>
@@ -139,36 +140,51 @@
 
     <section class="book" id="inside">
         <h2 class="running-head"><em>What’s in it</em></h2>
-        <p class="book-lede">Arc’s sidebar and Spaces, <em>on the engine Safari uses.</em></p>
+        <p class="book-lede">A sidebar of Spaces, <em>on the engine Safari uses.</em></p>
         <div class="book-entry">
             <span class="caption">Spaces</span>
             <h3>Tabs down the side, a set for each Space.</h3>
-            <p class="prose">Each Space keeps its own tabs and, if you like, its own profile, so work logins never meet personal ones. Swipe between Spaces on the trackpad, or press Control and a number. Favorites sit as icons at the top, pinned tabs return to their page when you close them, and two tabs can share the window in split view. Tabs can go across the top instead, if you’d rather.</p>
+            <p class="prose">Each Space keeps its own tabs and, if you like, its own profile, so work logins never meet personal ones. Swipe between Spaces on the trackpad, or press Control and a number. Favorites sit as icons at the top. Pinned tabs return to their page when you close them, and go in folders, folders inside folders if you like. Today’s tabs that you haven’t looked at for 12 hours are put away, and kept for 30 days in the archive.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Links</span>
+            <h3>Glance, Petals and link rules.</h3>
+            <p class="prose">A link from a pinned tab to another site opens in Glance, on a sheet of glass over the page, and so does any link you ⇧-click; keep it as a tab, or let it go. A link from another app opens in a Petal, a small window for a quick look, unless a link rule sends that site straight to one of your Spaces.</p>
         </div>
         <div class="book-entry">
             <span class="caption">The engine</span>
             <h3>WebKit, in a native app.</h3>
-            <p class="prose">Pages are drawn by WebKit, the engine Safari uses. A tab you haven’t looked at for half an hour gives back its memory, then wakes on the same page, at the same scroll, with its history intact. Iris updates itself: a new version downloads in the background and installs when you quit.</p>
+            <p class="prose">Pages are drawn by WebKit, the engine Safari uses. Up to four tabs share the window in split view. A tab you haven’t looked at for half an hour gives back its memory, then wakes on the same page, at the same scroll, with its history intact. Iris updates itself: a new version downloads in the background and installs when you quit.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">Site styles</span>
+            <h3>Your own type for any site.</h3>
+            <p class="prose">Give a site your own CSS, or set it in EB Garamond, and it stays that way every time you visit. Prune clicks away the parts of a page you’d rather not see, and remembers them; Undo puts them back.</p>
         </div>
         <div class="book-entry">
             <span class="caption">Extensions</span>
             <h3>From the Chrome Web Store.</h3>
-            <p class="prose">Chrome extensions run on WebKit’s extension engine, the one Safari’s extensions use. Visit an extension in the Chrome Web Store and Iris shows its own Add button above the page, since Chrome’s won’t work here. Before anything is added, Iris lists what it will be able to do.</p>
+            <p class="prose">Chrome extensions run on WebKit’s extension engine, the one Safari’s extensions use. Visit an extension in the Chrome Web Store and Iris shows its own Add button above the page, since Chrome’s won’t work here. Before anything is added, Iris lists what it will be able to do. Extensions that talk to an app on your Mac can.</p>
         </div>
         <div class="book-entry">
             <span class="caption">Passwords</span>
             <h3>Kept in your Mac’s keychain.</h3>
-            <p class="prose">When you sign in, Iris offers to save the password, and next time it offers to fill it. It fills only on secure pages, and never into a frame hidden inside one. Copying a saved password out of Iris asks for Touch ID first. Passwords exported from Dia or Chrome come in all at once from the file.</p>
+            <p class="prose">When you sign in, Iris offers to save the password, and next time it offers to fill it, after Touch ID. It fills only on secure pages, and never into a frame hidden inside one. Passwords exported from Dia or Chrome come in all at once from the file.</p>
         </div>
         <div class="book-entry">
             <span class="caption">Privacy</span>
             <h3>Ads and trackers blocked.</h3>
-            <p class="prose">EasyList and EasyPrivacy, compiled for WebKit and refreshed each week. The shield at the end of the address bar holds everything else for the site: blocking, camera, microphone, zoom and sound. Private windows keep nothing on disk and forget everything when they close. Iris has no accounts and sends no telemetry.</p>
+            <p class="prose">EasyList and EasyPrivacy, compiled for WebKit and refreshed each week. The shield at the end of the address bar holds everything else for the site: blocking, camera, microphone, zoom, sound and its style. Private windows keep nothing on disk and forget everything when they close. Iris has no accounts and sends no telemetry.</p>
+        </div>
+        <div class="book-entry">
+            <span class="caption">On your Mac</span>
+            <h3>Short titles, and a look before you click.</h3>
+            <p class="prose">A tab you pin gets a short name, and holding ⇧ over a link shows two sentences about its page. Both are written by Apple Intelligence on your Mac; the page is read without cookies, and nothing is sent anywhere else.</p>
         </div>
         <div class="book-entry">
             <span class="caption">Reading</span>
             <h3>Reader, Translate, Picture in Picture.</h3>
-            <p class="prose">Reader sets an article in EB Garamond, without the page around it. Translate turns a page in another language into yours on your Mac, with Apple’s own translation, and puts the original back with one click. A video can float in Picture in Picture while you read on.</p>
+            <p class="prose">Reader sets an article in EB Garamond, without the page around it. Translate turns a page in another language into yours on your Mac, with Apple’s own translation, and puts the original back with one click. A video floats in Picture in Picture when you switch tabs, and the tab you left keeps its controls in the sidebar.</p>
         </div>
     </section>
 
@@ -207,7 +223,7 @@
             <div class="compare-col">
                 <span class="caption">From Arc</span>
                 <h3>Spaces and all.</h3>
-                <p class="prose">Every Space with its pinned tabs and favorites, the Spaces’ icons, and your history.</p>
+                <p class="prose">Every Space with its pinned tabs, folders and favorites, the Spaces’ icons, and your history.</p>
             </div>
             <div class="compare-col">
                 <span class="caption">From Dia</span>
@@ -215,11 +231,13 @@
                 <p class="prose">Each profile’s open and pinned tabs, and your history. Your passwords follow from the file Dia exports.</p>
             </div>
             <div class="compare-col">
-                <span class="caption">From Chrome and Safari</span>
+                <span class="caption">From Chrome, Safari and others</span>
                 <h3>Bookmarks and history.</h3>
-                <p class="prose">From Chrome, also your open and pinned tabs. macOS keeps both browsers’ files private, so Iris asks for Full Disk Access first. Nothing in the old browser is changed.</p>
+                <p class="prose">From Chrome, Brave, Edge and Vivaldi, also your open and pinned tabs, and from Firefox its bookmarks toolbar. macOS keeps some browsers’ files private, so Iris asks for Full Disk Access first. Nothing in the old browser is changed.</p>
             </div>
         </div>
+        <p class="caption ir-marks">Arc and Dia are The Browser Company’s, Chrome is Google’s, Safari is Apple’s, Firefox is Mozilla’s, Brave is Brave Software’s, Edge is Microsoft’s and Vivaldi is Vivaldi Technologies’. Iris isn’t made with or endorsed by any of them; it only reads what they left on your Mac.</p>
+    
     </section>
 
 
@@ -233,7 +251,7 @@
             <div class="index-row"><span class="t">Split view</span><span class="dots"></span><span class="v">⌃⇧=</span></div>
             <div class="index-row"><span class="t">Reader</span><span class="dots"></span><span class="v">⇧⌘R</span></div>
             <div class="index-row"><span class="t">A private window</span><span class="dots"></span><span class="v">⇧⌘N</span></div>
-            <div class="index-row"><span class="t">Reopen the tab you just closed</span><span class="dots"></span><span class="v">⇧⌘T</span></div>
+            <div class="index-row"><span class="t">Your recent tabs: hold ⌃, press Tab to go back further</span><span class="dots"></span><span class="v">⌃Tab</span></div>
         </div>
     </section>
 
