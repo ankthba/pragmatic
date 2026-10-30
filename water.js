@@ -1,22 +1,21 @@
 /* The paper, stirred.
 
-   The page's paper hides a field of the mark's diamonds. At rest it is
-   bare. The cursor moves through it like a finger drawn through a bowl
-   of water: only while it moves does it push, and only where the water
-   is stirred do the diamonds come up, swelling in the wake and in the
-   ripples that run out from it, and leaning with the surface the way
-   light does through a ripple. When the cursor stops, the water settles
-   of its own accord and the diamonds sink back into the paper.
+   The page's paper hides a fine field of the mark's diamonds. At rest
+   it is bare. The cursor moves through it like a finger drawn through a
+   bowl of water: only while it moves does it push, and the diamonds
+   come up where the surface bends, the way light catches on ripples, so
+   the wake shows as fine rings running out and fading rather than as a
+   patch. The words float above it; nothing is kept out. When the cursor
+   stops, the water settles of its own accord and the paper is bare
+   again.
 
    The water is the one on aniketh.net (assets/js/surface.js): a damped
    wave equation on a bed of springs, worked out on a fine grid at a
    fixed step, pressed by the cursor. A diamond sits on every other
-   point of that grid, its size and strength set by the water's depth
-   and slope beneath it. The words and the mark stand in the water like
-   stones: no water is over them, so ripples run up against their
-   edges, heap there, run back off them and bend around them, and no
-   diamond comes up on the type. It sleeps when nothing moves, and draws
-   nothing for anyone who has asked for less motion. */
+   point of that grid, its size and strength set mostly by the slope of
+   the water beneath it and a little by its depth. It sleeps when
+   nothing moves, and draws nothing for anyone who has asked for less
+   motion. */
 
 'use strict';
 
@@ -24,17 +23,15 @@
   /* ---------- Tuning ----------
      Distances are in CSS pixels, times in seconds. */
 
-  var CELL = 14;             // the water's grid
-  var MAX_CELLS = 16000;     // past this many, the grid grows coarser instead
+  var CELL = 12;             // the water's grid
+  var MAX_CELLS = 20000;     // past this many, the grid grows coarser instead
   var STRIDE = 2;            // a diamond on every this many points of the grid, each way
 
-  var HALF = 0.9;            // half a diamond's width as it first shows
-  var SWELL = 5.4;           // and at its fullest, right in the wake
-  var PEAK = 0.5;            // its strength at its fullest
-  var CURVE = 0.7;           // strength goes as the stirring to this power, so ripples show
+  var HALF = 0.55;           // half a diamond's width as it first shows
+  var SWELL = 3.2;           // and at its fullest
+  var PEAK = 0.36;           // its strength at its fullest
+  var CURVE = 1.15;          // strength goes as the light to this power, so the faint stays faint
   var LEVELS = 32;           // steps of size and strength, so diamonds are filled in batches
-
-  var SHORE = 12;            // the water keeps this far from a line of type or the mark
 
   var PAD = 3;               // cells worked out beyond each edge of the window
   var STEP = 1 / 60;         // the fixed step, whatever the screen's refresh rate
@@ -53,15 +50,14 @@
   var BOW = 0.7;             // the water heaped up ahead, against the hollow left behind
   var LEAD = 0.6;            // how far ahead and behind those sit, in spreads
 
-  var GLOW = 1.6;            // how much the water's depth raises a diamond
-  var SHEEN = 5;             // and how much its slope does, as light through a ripple
-  var BEND = 14;             // how far a slope shifts a diamond, px per unit of slope
-  var MAX_BEND = 0.25;       // at most, as a share of the space between diamonds
-  var FAINT = 0.08;          // stirring under this shows nothing, so only the wake comes up
+  var GLOW = 0.5;            // how much the water's depth raises a diamond
+  var SHEEN = 7;             // and how much its slope does, as light caught on a ripple
+  var BEND = 8;              // how far a slope shifts a diamond, px per unit of slope
+  var MAX_BEND = 0.12;       // at most, as a share of the space between diamonds
+  var FAINT = 0.1;           // light under this shows nothing, so only the ripples come up
   var STILL = 0.004;         // under this speed everywhere, the water counts as still
   var STILL_STEPS = 12;      // for this many steps running, before it sleeps
 
-  var root = document.documentElement;
   if (!window.requestAnimationFrame || !window.Float32Array) return;
   var calm = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var still = !!(calm && calm.matches);
@@ -86,7 +82,6 @@
   var cols = 0, rows = 0, W = 0, H = 0, N = 0, cellX = CELL, cellY = CELL, cell = CELL;
   var dpr = 1, pitch = CELL * STRIDE;
   var h, v, vn, drag;
-  var wet;                   // 1 where there is water, 0 on the words
   var subs = 1, dt = STEP, C2 = 0, K = SPRING * SPRING, NU = 0;
   var spread = 1, reach = 1, weights = null;
 
@@ -103,14 +98,12 @@
     var c = Math.max(4, Math.round(r.width / size));
     var n = Math.max(4, Math.round(r.height / size));
     var bw = Math.round(r.width * ratio), bh = Math.round(r.height * ratio);
-    if (c !== cols || n !== rows || ratio !== dpr || bw !== canvas.width || bh !== canvas.height) {
-      dpr = ratio;
-      cellX = r.width / c; cellY = r.height / n; cell = (cellX + cellY) / 2;
-      pitch = cell * STRIDE;
-      canvas.width = bw; canvas.height = bh;
-      build(c, n);
-    }
-    shore();
+    if (c === cols && n === rows && ratio === dpr && bw === canvas.width && bh === canvas.height) return;
+    dpr = ratio;
+    cellX = r.width / c; cellY = r.height / n; cell = (cellX + cellY) / 2;
+    pitch = cell * STRIDE;
+    canvas.width = bw; canvas.height = bh;
+    build(c, n);
     if (raf) draw(); else blank();
   }
 
@@ -120,7 +113,6 @@
 
     h = new Float32Array(N); v = new Float32Array(N); vn = new Float32Array(N);
     drag = new Float32Array(N);
-    wet = new Float32Array(N).fill(1);
     var x, y;
     for (y = 0; y < H; y++) {
       var ey = y < PAD ? (PAD - y) / PAD : y >= H - PAD ? (y - (H - PAD - 1)) / PAD : 0;
@@ -161,48 +153,6 @@
     }
   }
 
-  /* ---------- The shore ----------
-     Every line of type and the mark, as boxes in the window; a cell
-     within SHORE of one is dry land, so the shore follows the words
-     with its corners rounded. Water that was there is let go. */
-
-  var range = document.createRange();
-
-  function shore() {
-    if (!N) return;
-    var boxes = [];
-    var walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (var t = walk.nextNode(); t; t = walk.nextNode()) {
-      if (!/\S/.test(t.nodeValue)) continue;
-      var p = t.parentElement;
-      if (p && /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(p.tagName)) continue;
-      range.selectNodeContents(t);
-      var rs = range.getClientRects();
-      for (var k = 0; k < rs.length; k++) if (rs[k].width && rs[k].height) boxes.push(rs[k]);
-    }
-    var marks = document.querySelectorAll('svg, img');
-    for (k = 0; k < marks.length; k++) {
-      var b = marks[k].getBoundingClientRect();
-      if (b.width && b.height) boxes.push(b);
-    }
-    wet.fill(1);
-    for (k = 0; k < boxes.length; k++) {
-      var z = boxes[k];
-      var x0 = Math.max(0, Math.floor((z.left - SHORE) / cellX)), x1 = Math.min(cols - 1, Math.floor((z.right + SHORE) / cellX));
-      var y0 = Math.max(0, Math.floor((z.top - SHORE) / cellY)), y1 = Math.min(rows - 1, Math.floor((z.bottom + SHORE) / cellY));
-      for (var y = y0; y <= y1; y++) {
-        var cy = (y + 0.5) * cellY, dy = Math.max(z.top - cy, 0, cy - z.bottom);
-        for (var x = x0; x <= x1; x++) {
-          var cx = (x + 0.5) * cellX, dx = Math.max(z.left - cx, 0, cx - z.right);
-          if (dx * dx + dy * dy < SHORE * SHORE) {
-            var i = (y + PAD) * W + x + PAD;
-            wet[i] = 0; h[i] = 0; v[i] = 0; vn[i] = 0;
-          }
-        }
-      }
-    }
-  }
-
   /* ---------- The cursor ---------- */
 
   var pointer = { x: 0, y: 0, on: false, down: false };
@@ -221,7 +171,7 @@
       var wy = Math.exp(-d * d * k) * amount;
       if (wy < 1e-6) continue;
       var i = y * W + x0;
-      for (x = x0; x <= x1; x++, i++) vn[i] -= wy * weights[x - x0] * wet[i];
+      for (x = x0; x <= x1; x++, i++) vn[i] -= wy * weights[x - x0];
     }
   }
 
@@ -263,17 +213,13 @@
     for (var s = 1; s <= subs; s++) {
       /* Each cell's acceleration: the pull of its neighbours (the
          wave), the spring back to rest, drag, and a viscous drag that
-         smooths away the finest ripples. Only wet neighbours pull, so
-         at the shore no water flows into the land: a ripple heaps up
-         against it and runs back off it. The land stays still. */
+         smooths away the finest ripples. */
       for (y = 1; y < H - 1; y++) {
         i = y * W + 1;
         for (x = 1; x < W - 1; x++, i++) {
-          if (!wet[i]) { vn[i] = 0; continue; }
           hc = h[i]; vc = v[i];
-          var wl = wet[i - 1], wr = wet[i + 1], wu = wet[i - W], wd = wet[i + W];
-          a = C2 * (wl * (h[i - 1] - hc) + wr * (h[i + 1] - hc) + wu * (h[i - W] - hc) + wd * (h[i + W] - hc)) +
-              NU * (wl * (v[i - 1] - vc) + wr * (v[i + 1] - vc) + wu * (v[i - W] - vc) + wd * (v[i + W] - vc)) -
+          a = C2 * (h[i - 1] + h[i + 1] + h[i - W] + h[i + W] - 4 * hc) +
+              NU * (v[i - 1] + v[i + 1] + v[i - W] + v[i + W] - 4 * vc) -
               K * hc - drag[i] * vc;
           vn[i] = vc + a * dt;
         }
@@ -305,9 +251,9 @@
   }
 
   /* ---------- Drawing ----------
-     Seen through the water: a diamond comes up where the surface is
-     deep or slopes, swells with it, and leans with the slope. Diamonds
-     of one size are gathered into one shape and filled at once. */
+     Seen through the water: a diamond comes up where the surface bends,
+     swells with it, and leans a little with the slope. Diamonds of one
+     size are gathered into one shape and filled at once. */
 
   function blank() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -321,23 +267,15 @@
     for (q = 1; q < LEVELS; q++) lists[q].length = 0;
     for (var d = 0; d < count; d++) {
       var i = dotAt[d];
-      if (!wet[i]) continue;
-      /* The slope, from the wet side only where the shore cuts in. */
-      var wl = wet[i - 1], wr = wet[i + 1], wu = wet[i - W], wd = wet[i + W];
-      var gx = wl && wr ? (h[i + 1] - h[i - 1]) * 0.5 : wr ? h[i + 1] - h[i] : wl ? h[i] - h[i - 1] : 0;
-      var gy = wu && wd ? (h[i + W] - h[i - W]) * 0.5 : wd ? h[i + W] - h[i] : wu ? h[i] - h[i - W] : 0;
+      var gx = (h[i + 1] - h[i - 1]) * 0.5, gy = (h[i + W] - h[i - W]) * 0.5;
       var hc = h[i] < 0 ? -h[i] : h[i];
       var e = Math.sqrt(gx * gx + gy * gy) * SHEEN + hc * GLOW - FAINT;
       if (e <= 0.002) continue;
       var l = Math.round(top * Math.pow(1 - Math.exp(-e), CURVE));
       if (!l) continue;
-      /* A diamond at the shore holds its place rather than lean onto the land. */
-      var ox = 0, oy = 0;
-      if (wl && wr && wu && wd) {
-        ox = -gx * BEND; oy = -gy * BEND;
-        ox = ox > most ? most : ox < -most ? -most : ox;
-        oy = oy > most ? most : oy < -most ? -most : oy;
-      }
+      var ox = -gx * BEND, oy = -gy * BEND;
+      ox = ox > most ? most : ox < -most ? -most : ox;
+      oy = oy > most ? most : oy < -most ? -most : oy;
       lists[l].push(dotX[d] + ox, dotY[d] + oy);
       any = true;
     }
@@ -435,9 +373,6 @@
   };
   window.addEventListener('resize', resize, passive);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
-  /* The canvas holds to the window, so a page that scrolls moves its
-     words under the diamonds: measure where they are again. */
-  window.addEventListener('scroll', resize, passive);
 
   listen(window.matchMedia('(prefers-color-scheme: dark)'), function () { tint(); if (raf) draw(); });
 
@@ -459,6 +394,4 @@
   document.body.appendChild(canvas);
   tint();
   measure();
-  /* The words move once EB Garamond arrives. */
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize, function () {});
 })();
