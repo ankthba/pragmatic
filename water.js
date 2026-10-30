@@ -12,9 +12,11 @@
    wave equation on a bed of springs, worked out on a fine grid at a
    fixed step, pressed by the cursor. A diamond sits on every other
    point of that grid, its size and strength set by the water's depth
-   and slope beneath it, and the diamonds thin out near the words so
-   the type stays clear. It sleeps when nothing moves, and draws nothing
-   for anyone who has asked for less motion. */
+   and slope beneath it. The words and the mark stand in the water like
+   stones: no water is over them, so ripples run up against their
+   edges, heap there, run back off them and bend around them, and no
+   diamond comes up on the type. It sleeps when nothing moves, and draws
+   nothing for anyone who has asked for less motion. */
 
 'use strict';
 
@@ -32,8 +34,7 @@
   var CURVE = 0.7;           // strength goes as the stirring to this power, so ripples show
   var LEVELS = 32;           // steps of size and strength, so diamonds are filled in batches
 
-  var CLEAR = 6;             // no diamond within this of a line of type
-  var FADE = 34;             // then a soft rise to full strength over this
+  var SHORE = 12;            // the water keeps this far from a line of type or the mark
 
   var PAD = 3;               // cells worked out beyond each edge of the window
   var STEP = 1 / 60;         // the fixed step, whatever the screen's refresh rate
@@ -85,12 +86,12 @@
   var cols = 0, rows = 0, W = 0, H = 0, N = 0, cellX = CELL, cellY = CELL, cell = CELL;
   var dpr = 1, pitch = CELL * STRIDE;
   var h, v, vn, drag;
+  var wet;                   // 1 where there is water, 0 on the words
   var subs = 1, dt = STEP, C2 = 0, K = SPRING * SPRING, NU = 0;
   var spread = 1, reach = 1, weights = null;
 
-  /* The diamonds: where each sits, the water cell beneath it, and how
-     open its paper is (1 in the clear, 0 at the type). */
-  var count = 0, dotX, dotY, dotAt, open;
+  /* The diamonds: where each sits, and the water cell beneath it. */
+  var count = 0, dotX, dotY, dotAt;
   var lists = [];
   for (var q = 0; q < LEVELS; q++) lists.push([]);
 
@@ -109,7 +110,7 @@
       canvas.width = bw; canvas.height = bh;
       build(c, n);
     }
-    clearance();
+    shore();
     if (raf) draw(); else blank();
   }
 
@@ -119,6 +120,7 @@
 
     h = new Float32Array(N); v = new Float32Array(N); vn = new Float32Array(N);
     drag = new Float32Array(N);
+    wet = new Float32Array(N).fill(1);
     var x, y;
     for (y = 0; y < H; y++) {
       var ey = y < PAD ? (PAD - y) / PAD : y >= H - PAD ? (y - (H - PAD - 1)) / PAD : 0;
@@ -148,7 +150,7 @@
     var start = STRIDE >> 1, across = Math.ceil((cols - start) / STRIDE), down = Math.ceil((rows - start) / STRIDE);
     count = across * down;
     dotX = new Float32Array(count); dotY = new Float32Array(count);
-    dotAt = new Int32Array(count); open = new Float32Array(count);
+    dotAt = new Int32Array(count);
     var d = 0;
     for (y = start; y < rows; y += STRIDE) {
       for (x = start; x < cols; x += STRIDE, d++) {
@@ -159,19 +161,15 @@
     }
   }
 
-  /* ---------- Keeping clear of the words ----------
-     Every line of type and the mark, as boxes in the window; each
-     diamond's openness falls smoothly to nothing as it nears one. */
+  /* ---------- The shore ----------
+     Every line of type and the mark, as boxes in the window; a cell
+     within SHORE of one is dry land, so the shore follows the words
+     with its corners rounded. Water that was there is let go. */
 
   var range = document.createRange();
-  var smooth = function (e0, e1, x) {
-    var u = (x - e0) / (e1 - e0);
-    u = u < 0 ? 0 : u > 1 ? 1 : u;
-    return u * u * (3 - 2 * u);
-  };
 
-  function clearance() {
-    if (!count) return;
+  function shore() {
+    if (!N) return;
     var boxes = [];
     var walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (var t = walk.nextNode(); t; t = walk.nextNode()) {
@@ -187,18 +185,21 @@
       var b = marks[k].getBoundingClientRect();
       if (b.width && b.height) boxes.push(b);
     }
-    var far = CLEAR + FADE;
-    for (var d = 0; d < count; d++) {
-      var x = dotX[d], y = dotY[d], o = 1;
-      for (k = 0; k < boxes.length && o > 0; k++) {
-        var z = boxes[k];
-        var dx = Math.max(z.left - x, 0, x - z.right);
-        var dy = Math.max(z.top - y, 0, y - z.bottom);
-        if (dx >= far || dy >= far) continue;
-        var f = smooth(CLEAR, far, Math.sqrt(dx * dx + dy * dy));
-        if (f < o) o = f;
+    wet.fill(1);
+    for (k = 0; k < boxes.length; k++) {
+      var z = boxes[k];
+      var x0 = Math.max(0, Math.floor((z.left - SHORE) / cellX)), x1 = Math.min(cols - 1, Math.floor((z.right + SHORE) / cellX));
+      var y0 = Math.max(0, Math.floor((z.top - SHORE) / cellY)), y1 = Math.min(rows - 1, Math.floor((z.bottom + SHORE) / cellY));
+      for (var y = y0; y <= y1; y++) {
+        var cy = (y + 0.5) * cellY, dy = Math.max(z.top - cy, 0, cy - z.bottom);
+        for (var x = x0; x <= x1; x++) {
+          var cx = (x + 0.5) * cellX, dx = Math.max(z.left - cx, 0, cx - z.right);
+          if (dx * dx + dy * dy < SHORE * SHORE) {
+            var i = (y + PAD) * W + x + PAD;
+            wet[i] = 0; h[i] = 0; v[i] = 0; vn[i] = 0;
+          }
+        }
       }
-      open[d] = o;
     }
   }
 
@@ -220,7 +221,7 @@
       var wy = Math.exp(-d * d * k) * amount;
       if (wy < 1e-6) continue;
       var i = y * W + x0;
-      for (x = x0; x <= x1; x++, i++) vn[i] -= wy * weights[x - x0];
+      for (x = x0; x <= x1; x++, i++) vn[i] -= wy * weights[x - x0] * wet[i];
     }
   }
 
@@ -262,13 +263,17 @@
     for (var s = 1; s <= subs; s++) {
       /* Each cell's acceleration: the pull of its neighbours (the
          wave), the spring back to rest, drag, and a viscous drag that
-         smooths away the finest ripples. */
+         smooths away the finest ripples. Only wet neighbours pull, so
+         at the shore no water flows into the land: a ripple heaps up
+         against it and runs back off it. The land stays still. */
       for (y = 1; y < H - 1; y++) {
         i = y * W + 1;
         for (x = 1; x < W - 1; x++, i++) {
+          if (!wet[i]) { vn[i] = 0; continue; }
           hc = h[i]; vc = v[i];
-          a = C2 * (h[i - 1] + h[i + 1] + h[i - W] + h[i + W] - 4 * hc) +
-              NU * (v[i - 1] + v[i + 1] + v[i - W] + v[i + W] - 4 * vc) -
+          var wl = wet[i - 1], wr = wet[i + 1], wu = wet[i - W], wd = wet[i + W];
+          a = C2 * (wl * (h[i - 1] - hc) + wr * (h[i + 1] - hc) + wu * (h[i - W] - hc) + wd * (h[i + W] - hc)) +
+              NU * (wl * (v[i - 1] - vc) + wr * (v[i + 1] - vc) + wu * (v[i - W] - vc) + wd * (v[i + W] - vc)) -
               K * hc - drag[i] * vc;
           vn[i] = vc + a * dt;
         }
@@ -315,18 +320,24 @@
     var top = LEVELS - 1, most = MAX_BEND * pitch, any = false, q;
     for (q = 1; q < LEVELS; q++) lists[q].length = 0;
     for (var d = 0; d < count; d++) {
-      var o = open[d];
-      if (!o) continue;
       var i = dotAt[d];
-      var gx = (h[i + 1] - h[i - 1]) * 0.5, gy = (h[i + W] - h[i - W]) * 0.5;
+      if (!wet[i]) continue;
+      /* The slope, from the wet side only where the shore cuts in. */
+      var wl = wet[i - 1], wr = wet[i + 1], wu = wet[i - W], wd = wet[i + W];
+      var gx = wl && wr ? (h[i + 1] - h[i - 1]) * 0.5 : wr ? h[i + 1] - h[i] : wl ? h[i] - h[i - 1] : 0;
+      var gy = wu && wd ? (h[i + W] - h[i - W]) * 0.5 : wd ? h[i + W] - h[i] : wu ? h[i] - h[i - W] : 0;
       var hc = h[i] < 0 ? -h[i] : h[i];
       var e = Math.sqrt(gx * gx + gy * gy) * SHEEN + hc * GLOW - FAINT;
       if (e <= 0.002) continue;
-      var l = Math.round(top * Math.pow(1 - Math.exp(-e), CURVE) * o);
+      var l = Math.round(top * Math.pow(1 - Math.exp(-e), CURVE));
       if (!l) continue;
-      var ox = -gx * BEND, oy = -gy * BEND;
-      ox = ox > most ? most : ox < -most ? -most : ox;
-      oy = oy > most ? most : oy < -most ? -most : oy;
+      /* A diamond at the shore holds its place rather than lean onto the land. */
+      var ox = 0, oy = 0;
+      if (wl && wr && wu && wd) {
+        ox = -gx * BEND; oy = -gy * BEND;
+        ox = ox > most ? most : ox < -most ? -most : ox;
+        oy = oy > most ? most : oy < -most ? -most : oy;
+      }
       lists[l].push(dotX[d] + ox, dotY[d] + oy);
       any = true;
     }
