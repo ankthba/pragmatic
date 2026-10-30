@@ -1,29 +1,35 @@
-/* The paper, at sea.
+/* The paper, under water.
 
-   The page's paper is a field of the mark's diamonds afloat on water.
-   Left alone, long low swells roll slowly across it from the lower left,
-   the way the open sea moves: each diamond rises and swells as a crest
-   passes under it and sinks small in the trough behind, so the swells
-   show as soft bands of diamonds travelling through the field. The cursor
-   is a hand trailed through the same water, and a click or a tap lets a
-   drop fall. What they stir runs out as real water does, the long waves
-   first and the short ripples after, bounces off the edges of the window,
-   passes through the swell and through itself, and fades. Every diamond
-   also leans a little with the slope of the water under it, the way
-   things seen through water do.
+   The page's paper is a field of the mark's diamonds lying under water,
+   and the diamonds are the light that reaches them. A curved surface acts
+   as a lens: where the water above bends just enough to bring the light
+   to a point on the paper, it draws a thin bright line, the way sunlight
+   draws a moving web on the floor of a pool. The diamonds along those
+   lines swell and darken; where the light spreads out they shrink and
+   fade; under calm water they rest small and faint. Each diamond also
+   leans a little with the slope above it, the way things seen through
+   water do.
 
-   The water is a sum of standing waves across the window, each the shape
-   cos(m pi x / width) cos(n pi y / height). Each one swings on its own at
-   the speed deep water gives a wave of its length, and dies away the
-   faster the shorter it is; none is shorter than about three diamonds, so
-   every wave the water carries can be drawn. Because each of them is level
-   at the edges of the window, a wave meets the edges as it would a wall
-   and bounces back. Each frame moves every wave on exactly by the time
-   that has passed, and each diamond's size, strength and lean follow the
-   water continuously, so nothing steps or flickers, on a fast screen or a
-   slow one. The swell is a few long sea waves worked out directly. It all
-   stops while the page is hidden, and for anyone who has asked for less
-   motion nothing is drawn at all. */
+   Left alone, the water is a random sea: a few dozen waves of every
+   heading and of many lengths, chosen afresh on every visit, the longer
+   ones travelling faster as they do at sea, so the web of light shifts,
+   splits and joins everywhere and never repeats. The cursor is a hand
+   trailed through the same water and a click or a tap lets a drop fall.
+   What they stir runs out as real water does, the long waves first and
+   the short ripples after, bounces off the edges of the window, passes
+   through the sea and through itself, and fades.
+
+   The stirred water is a sum of standing waves across the window, each
+   the shape cos(m pi x / width) cos(n pi y / height). Each one swings on
+   its own at the speed deep water gives a wave of its length and dies
+   away the faster the shorter it is; none is shorter than about three
+   diamonds, so every wave can be drawn. Because each of them is level at
+   the edges of the window, a wave meets the edges as it would a wall and
+   bounces back. Each frame moves every wave on exactly by the time that
+   has passed, and every diamond follows the water continuously, so
+   nothing steps or flickers, on a fast screen or a slow one. It all stops
+   while the page is hidden, and for anyone who has asked for less motion
+   nothing is drawn at all. */
 
 'use strict';
 
@@ -35,8 +41,8 @@
   var MAX_DIAMONDS = 8000;   // past this many, they spread further apart
   var MAX_WAVES = 2400;      // past this many standing waves, the shortest grows longer
 
-  var GRAVITY = 4000;        // sets how fast a wave of each length travels, px/s²
-  var DAMPING = 0.3;         // how fast the longest waves die away, 1/s
+  var GRAVITY = 4000;        // sets how fast a stirred wave of each length travels, px/s²
+  var DAMPING = 0.3;         // how fast the longest stirred waves die away, 1/s
   var VISCOSITY = 60;        // and how much faster the shorter ones do, px²/s
 
   var HAND = 16;             // the width of the hand's push (sigma), px
@@ -44,23 +50,28 @@
   var HAND_TOP = 1400;       // speeds above this push no harder, px/s
   var DROP = 18;             // a drop's width (sigma), px
   var DROP_PUSH = 280;       // and how hard it strikes, as a sudden speed of the surface, px/s
-  var STILL = 0.02;          // under this much motion, the water lies flat
+  var STILL = 0.02;          // under this much motion, the stirred water lies flat
 
-  /* The swell: long sea waves, each [length px, heading deg, height px, speed px/s].
-     Heading 0 runs to the right and -90 runs up the window. */
-  var SWELL = [[360, -28, 1.4, 48], [330, -20, 1.0, 44], [420, -36, 0.8, 52], [900, -10, 0.7, 62]];
-  var SWELL_IN = 1.8;        // seconds for the swell to rise after the page opens
+  /* The sea: waves of every heading, chosen afresh on every visit. */
+  var SEA_WAVES = 24;        // how many waves make up the sea
+  var SEA_SHORTEST = 110;    // the range of their lengths, px
+  var SEA_LONGEST = 380;
+  var SEA_STEEP = 0.03;      // how steep each wave is (its height times its wavenumber)
+  var SEA_GRAVITY = 380;     // sets how fast each travels, the longer the faster, px/s²
+  var SEA_IN = 1.5;          // seconds for the sea to rise after the page opens
 
-  /* The diamonds, from the bottom of a trough to the top of a crest. */
-  var LEVEL = 3.5;           // the height of water that takes a diamond about three quarters of the way, px
-  var TROUGH = 0.1;          // half a diamond's width at the bottom of a trough, px
-  var REST = 0.7;            // on level water
-  var CREST = 2.7;           // at the top of a crest
-  var INK_TROUGH = 0;        // its strength at the bottom of a trough
-  var INK_REST = 0.06;       // on level water
-  var INK_CREST = 0.5;       // at the top of a crest
+  /* The light on the paper, and the diamonds that show it. */
+  var DEPTH = 150;           // how far below the surface the paper lies, px: deeper draws finer lines
+  var GATHER = 0.15;         // the most the light may gather, so a line never glares or flickers
+  var BRIGHT = 1.6;          // the gathering of light that takes a diamond about three quarters up
+  var DIM = 0.15;            // half a diamond's width where the light spreads out, px
+  var REST = 0.65;           // under calm water
+  var LIT = 2.8;             // on a line of light
+  var INK_DIM = 0.012;       // its strength where the light spreads out
+  var INK_REST = 0.055;      // under calm water
+  var INK_LIT = 0.55;        // on a line of light
   var DARK_INK = 0.8;        // strengths on a dark page, as a share of these
-  var LEAN = 12;             // how far the slope beneath shifts a diamond, px per unit of slope
+  var LEAN = 12;             // how far the slope above shifts a diamond, px per unit of slope
   var MAX_LEAN = 4;          // at most, px
   var LEVELS = 64;           // steps of strength, so diamonds of one strength are filled at once
 
@@ -87,15 +98,17 @@
     strength = dark ? DARK_INK : 1;
   }
 
-  /* ---------- The water ----------
+  /* ---------- The stirred water ----------
      M by N standing waves over a window wide by tall; a and b hold each
      one's height and speed. The diamonds sit on an X by Y grid. */
 
   var wide = 0, tall = 0, dpr = 1, M = 0, N = 0, X = 0, Y = 0, stepX = PITCH, stepY = PITCH;
   var km, kn, omega2, damp, wd, a, b, c11, c12, c21, c22, stepDt = -1;
-  var cosX, slopeX, cosY, slopeY;   // each wave's shape and slope at the diamonds
-  var HR, GR, rowH, rowGx, rowGy;
-  var swell = [];
+  /* Each standing wave's shape, slope and bend at the diamonds: across as
+     [wave][column] and down as [row][wave], so every sum runs along memory. */
+  var cosX, slopeX, bendX, cosY, slopeY, bendY;
+  var HR, GR, BR;                    // sums down each row of standing waves
+  var gx, gy, hxx, hyy, hxy;         // slope and bend under the diamonds of one row
   var awake = false;
   /* Each diamond's place, half-width and strength step this frame, and the
      diamonds ordered by strength step, so each step is filled at once. */
@@ -131,8 +144,9 @@
     var size = M * N;
     omega2 = new Float32Array(size); damp = new Float32Array(size); wd = new Float32Array(size);
     for (i = 0; i < M; i++) for (j = 0; j < N; j++) {
+      var id = i * N + j;
       k = Math.sqrt(km[i] * km[i] + kn[j] * kn[j]);
-      var w2 = GRAVITY * k, g = DAMPING + VISCOSITY * k * k, id = i * N + j;
+      var w2 = GRAVITY * k, g = DAMPING + VISCOSITY * k * k;
       omega2[id] = w2; damp[id] = g; wd[id] = Math.sqrt(Math.max(w2 - g * g, 1e-6));
     }
     a = new Float32Array(size); b = new Float32Array(size);
@@ -140,29 +154,48 @@
     c21 = new Float32Array(size); c22 = new Float32Array(size);
     stepDt = -1;
 
-    /* Across as [wave][column] and down as [row][wave], so every sum runs along memory. */
-    cosX = new Float32Array(M * X); slopeX = new Float32Array(M * X);
-    cosY = new Float32Array(Y * N); slopeY = new Float32Array(Y * N);
+    cosX = new Float32Array(M * X); slopeX = new Float32Array(M * X); bendX = new Float32Array(M * X);
+    cosY = new Float32Array(Y * N); slopeY = new Float32Array(Y * N); bendY = new Float32Array(Y * N);
     for (i = 0; i < M; i++) for (k = 0; k < X; k++) {
-      var x = (k + 0.5) * stepX;
-      cosX[i * X + k] = Math.cos(km[i] * x);
+      var x = (k + 0.5) * stepX, c = Math.cos(km[i] * x);
+      cosX[i * X + k] = c;
       slopeX[i * X + k] = -km[i] * Math.sin(km[i] * x);
+      bendX[i * X + k] = -km[i] * km[i] * c;
     }
     for (k = 0; k < Y; k++) for (j = 0; j < N; j++) {
-      var y = (k + 0.5) * stepY;
-      cosY[k * N + j] = Math.cos(kn[j] * y);
+      var y = (k + 0.5) * stepY, cy = Math.cos(kn[j] * y);
+      cosY[k * N + j] = cy;
       slopeY[k * N + j] = -kn[j] * Math.sin(kn[j] * y);
+      bendY[k * N + j] = -kn[j] * kn[j] * cy;
     }
-    HR = new Float32Array(M * Y); GR = new Float32Array(M * Y);
-    rowH = new Float32Array(X); rowGx = new Float32Array(X); rowGy = new Float32Array(X);
+    HR = new Float32Array(M * Y); GR = new Float32Array(M * Y); BR = new Float32Array(M * Y);
+    gx = new Float32Array(X); gy = new Float32Array(X);
+    hxx = new Float32Array(X); hyy = new Float32Array(X); hxy = new Float32Array(X);
     dotX = new Float32Array(X * Y); dotY = new Float32Array(X * Y); dotR = new Float32Array(X * Y);
     dotLevel = new Uint8Array(X * Y); order = new Int32Array(X * Y);
-    swell = [];
-    for (k = 0; k < SWELL.length; k++) {
-      swell.push({ cx: new Float32Array(X), sx: new Float32Array(X), cy: new Float32Array(Y), sy: new Float32Array(Y) });
-    }
+    seaCosX = new Float32Array(SEA_WAVES * X); seaSinX = new Float32Array(SEA_WAVES * X);
+    seaCosY = new Float32Array(SEA_WAVES * Y); seaSinY = new Float32Array(SEA_WAVES * Y);
     awake = false;
   }
+
+  /* ---------- The sea ----------
+     Each wave has a wavenumber across and down, a speed of swing, a height
+     and a starting phase. Lengths are spread evenly on a log scale, so long
+     and short waves are equally represented, and headings go all round. */
+
+  var sea = [], seaCosX, seaSinX, seaCosY, seaSinY;
+  (function () {
+    var lo = Math.log(SEA_SHORTEST), hi = Math.log(SEA_LONGEST);
+    for (var k = 0; k < SEA_WAVES; k++) {
+      var len = Math.exp(lo + (hi - lo) * (k + Math.random()) / SEA_WAVES);
+      var kw = 2 * Math.PI / len, th = 2 * Math.PI * Math.random();
+      sea.push({
+        kx: kw * Math.cos(th), ky: kw * Math.sin(th), w: Math.sqrt(SEA_GRAVITY * kw),
+        h: SEA_STEEP / kw * (0.7 + 0.6 * Math.random()), phase: 2 * Math.PI * Math.random(),
+      });
+    }
+  })();
+  var seaStart = 600 * Math.random();   // a different moment of the sea on every visit
 
   /* ---------- Stirring ----------
      A push is a soft dent of pressure at (x, y), in window pixels, of the
@@ -250,10 +283,13 @@
   }
 
   /* ---------- Drawing ----------
-     The water's height and slope under every diamond are the sums of every
-     standing wave's, plus the swell's. Height sets a diamond's size and
-     strength, softly limited so a big wave never blots; slope sets its
-     lean. Diamonds of one strength are gathered into one shape. */
+     Under every diamond, the slope of the water and how it bends (across,
+     down and on the diagonal) are the sums of every standing wave's and
+     every sea wave's. The bend says how the water above spreads or gathers
+     the light onto the paper DEPTH below: light gathered fourfold onto a
+     quarter of the area. That gathering sets the diamond's size and
+     strength, softly limited so nothing blots; the slope sets its lean.
+     Diamonds of one strength are filled at once. */
 
   function draw(time) {
     var i, j, k, q, x, y, m;
@@ -262,56 +298,70 @@
       for (i = 0; i < M; i++) {
         var row = i * N, out = i * Y;
         for (y = 0; y < Y; y++) {
-          var hs = 0, gs = 0, col = y * N;
-          for (j = 0; j < N; j++) { var h = a[row + j]; hs += h * cosY[col + j]; gs += h * slopeY[col + j]; }
-          HR[out + y] = hs; GR[out + y] = gs;
+          var hs = 0, gs = 0, bs = 0, col = y * N;
+          for (j = 0; j < N; j++) {
+            var h = a[row + j];
+            hs += h * cosY[col + j]; gs += h * slopeY[col + j]; bs += h * bendY[col + j];
+          }
+          HR[out + y] = hs; GR[out + y] = gs; BR[out + y] = bs;
         }
       }
     }
 
-    var ramp = Math.min(1, time / SWELL_IN);
+    /* Each sea wave along the columns (with time) and down the rows, so a
+       diamond only has to combine the two. */
+    var ramp = Math.min(1, time / SEA_IN);
     ramp = ramp * ramp * (3 - 2 * ramp);
-    for (k = 0; k < SWELL.length; k++) {
-      var sw = SWELL[k], kw = 2 * Math.PI / sw[0], th = sw[1] * Math.PI / 180, t = swell[k];
-      var kx = kw * Math.cos(th), ky = kw * Math.sin(th), phase = k * 2.1 - kw * sw[3] * time;
-      for (x = 0; x < X; x++) { var p = kx * (x + 0.5) * stepX + phase; t.cx[x] = Math.cos(p); t.sx[x] = Math.sin(p); }
-      for (y = 0; y < Y; y++) { var pq = ky * (y + 0.5) * stepY; t.cy[y] = Math.cos(pq); t.sy[y] = Math.sin(pq); }
-      t.h = sw[2] * ramp; t.gx = t.h * kx; t.gy = t.h * ky;
+    var seaTime = seaStart + time;
+    for (k = 0; k < SEA_WAVES; k++) {
+      var w = sea[k], bx = k * X, by = k * Y, p0 = w.phase - w.w * seaTime;
+      for (x = 0; x < X; x++) { var p = w.kx * (x + 0.5) * stepX + p0; seaCosX[bx + x] = Math.cos(p); seaSinX[bx + x] = Math.sin(p); }
+      for (y = 0; y < Y; y++) { var pq = w.ky * (y + 0.5) * stepY; seaCosY[by + y] = Math.cos(pq); seaSinY[by + y] = Math.sin(pq); }
     }
 
     counts.fill(0);
-    var top = LEVELS - 1, scale = top / (INK_CREST * strength), dot = 0;
+    var top = LEVELS - 1, scale = top / (INK_LIT * strength), dot = 0;
     for (y = 0; y < Y; y++) {
-      for (x = 0; x < X; x++) { rowH[x] = 0; rowGx[x] = 0; rowGy[x] = 0; }
+      for (x = 0; x < X; x++) { gx[x] = 0; gy[x] = 0; hxx[x] = 0; hyy[x] = 0; hxy[x] = 0; }
       if (awake) {
         for (i = 0; i < M; i++) {
-          var hr = HR[i * Y + y], gr = GR[i * Y + y];
+          var hr = HR[i * Y + y], gr = GR[i * Y + y], br = BR[i * Y + y];
           if (hr > -1e-7 && hr < 1e-7 && gr > -1e-7 && gr < 1e-7) continue;
           var base = i * X;
           for (x = 0; x < X; x++) {
-            rowH[x] += hr * cosX[base + x];
-            rowGx[x] += hr * slopeX[base + x];
-            rowGy[x] += gr * cosX[base + x];
+            var cx0 = cosX[base + x], sx0 = slopeX[base + x];
+            gx[x] += hr * sx0; gy[x] += gr * cx0;
+            hxx[x] += hr * bendX[base + x]; hyy[x] += br * cx0; hxy[x] += gr * sx0;
           }
         }
       }
-      for (k = 0; k < SWELL.length; k++) {
-        var s = swell[k], cy0 = s.cy[y], sy0 = s.sy[y];
+      for (k = 0; k < SEA_WAVES; k++) {
+        var sw = sea[k], cy0 = seaCosY[k * Y + y], sy0 = seaSinY[k * Y + y], bk = k * X;
+        var amp = sw.h * ramp, ax = amp * sw.kx, ay = amp * sw.ky;
+        var axx = -ax * sw.kx, ayy = -ay * sw.ky, axy = -ax * sw.ky;
         for (x = 0; x < X; x++) {
-          var sn = s.sx[x] * cy0 + s.cx[x] * sy0, cs = s.cx[x] * cy0 - s.sx[x] * sy0;
-          rowH[x] += s.h * sn; rowGx[x] += s.gx * cs; rowGy[x] += s.gy * cs;
+          var cxs = seaCosX[bk + x], sxs = seaSinX[bk + x];
+          var cs = cxs * cy0 - sxs * sy0, sn = sxs * cy0 + cxs * sy0;
+          gx[x] += ax * cs; gy[x] += ay * cs;
+          hxx[x] += axx * sn; hyy[x] += ayy * sn; hxy[x] += axy * sn;
         }
       }
       var py = (y + 0.5) * stepY;
       for (x = 0; x < X; x++, dot++) {
-        m = rowH[x] / LEVEL;
+        /* The area a patch of light covers on the paper, against the
+           surface it came through; its inverse is how much it gathers. */
+        var fx = 1 - DEPTH * hxx[x], fy = 1 - DEPTH * hyy[x], fxy = DEPTH * hxy[x];
+        var area = fx * fy - fxy * fxy;
+        if (area < 0) area = -area;
+        if (area < GATHER) area = GATHER;
+        m = (1 / area - 1) / BRIGHT;
         m = m / Math.sqrt(1 + m * m);
-        var r = m >= 0 ? REST + (CREST - REST) * m : REST + (REST - TROUGH) * m;
-        var strong = (m >= 0 ? INK_REST + (INK_CREST - INK_REST) * m : INK_REST + (INK_REST - INK_TROUGH) * m) * strength;
+        var r = m >= 0 ? REST + (LIT - REST) * m : REST + (REST - DIM) * m;
+        var strong = (m >= 0 ? INK_REST + (INK_LIT - INK_REST) * m : INK_REST + (INK_REST - INK_DIM) * m) * strength;
         var level = Math.round(strong * scale);
         if (level < 1 || r < 0.15) level = 0;
         else if (level > top) level = top;
-        var ox = -LEAN * rowGx[x], oy = -LEAN * rowGy[x];
+        var ox = -LEAN * gx[x], oy = -LEAN * gy[x];
         ox = ox > MAX_LEAN ? MAX_LEAN : ox < -MAX_LEAN ? -MAX_LEAN : ox;
         oy = oy > MAX_LEAN ? MAX_LEAN : oy < -MAX_LEAN ? -MAX_LEAN : oy;
         dotX[dot] = (x + 0.5) * stepX + ox; dotY[dot] = py + oy; dotR[dot] = r;
@@ -349,7 +399,7 @@
 
   /* ---------- The loop ----------
      Every frame moves the water on by the time since the last; while
-     only the swell moves, frames come at most about sixty times a
+     only the sea moves, frames come at most about sixty times a
      second. */
 
   var raf = 0, then = 0, clock = 0, drawnAt = 0;
