@@ -46,6 +46,7 @@
             --quiet: rgba(26, 23, 18, 0.58);
             --serif: 'EB Garamond', Garamond, Georgia, serif;
             --pad: clamp(22px, 6vw, 96px);
+            --gutter: var(--pad);
             color-scheme: light dark;
         }
         @media (prefers-color-scheme: dark) {
@@ -72,6 +73,10 @@
             text-rendering: optimizeLegibility;
         }
 
+        main, footer {
+            position: relative;
+            z-index: 1;
+        }
         main {
             flex: 1;
             display: flex;
@@ -139,5 +144,7 @@
         <a href="mailto:me@aniketh.net">me@aniketh.net</a>
         <span>© 2026 Pragmatic Research, Inc.</span>
     </footer>
+
+    <script src="/pragmatic/field.js" defer></script>
 </body>
 </html>
