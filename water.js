@@ -1,21 +1,26 @@
 /* The paper, stirred.
 
-   The page's paper hides a fine field of the mark's diamonds. At rest
-   it is bare. The cursor moves through it like a finger drawn through a
-   bowl of water: only while it moves does it push, and the diamonds
-   come up where the surface bends, the way light catches on ripples, so
-   the wake shows as fine rings running out and fading rather than as a
-   patch. The words float above it; nothing is kept out. When the cursor
-   stops, the water settles of its own accord and the paper is bare
-   again.
+   The page's paper hides a fine field of the mark's diamonds, and the
+   water under it is never quite still. Left alone, it plays by itself:
+   a drop here and there, a short patter of rain, two drops at once
+   whose rings cross, or an unseen finger drawn slowly through it. The
+   cursor moves through the same water like a finger drawn through a
+   bowl: only while it moves does it push, and its wake runs into
+   whatever rings are already out. While the cursor is in play the
+   water's own weather quietens; a couple of seconds after it stops, the
+   weather comes back.
+
+   The diamonds come up where the surface bends, the way light catches
+   on ripples, so every disturbance shows as fine rings running out and
+   fading. The words float above it; nothing is kept out.
 
    The water is the one on aniketh.net (assets/js/surface.js): a damped
    wave equation on a bed of springs, worked out on a fine grid at a
-   fixed step, pressed by the cursor. A diamond sits on every other
-   point of that grid, its size and strength set mostly by the slope of
-   the water beneath it and a little by its depth. It sleeps when
-   nothing moves, and draws nothing for anyone who has asked for less
-   motion. */
+   fixed step. A diamond sits on every other point of that grid, its
+   size and strength set mostly by the slope of the water beneath it and
+   a little by its depth. Between disturbances it rests until the next,
+   it stops while the page is hidden, and for anyone who has asked for
+   less motion it draws nothing at all. */
 
 'use strict';
 
@@ -56,7 +61,27 @@
   var MAX_BEND = 0.12;       // at most, as a share of the space between diamonds
   var FAINT = 0.1;           // light under this shows nothing, so only the ripples come up
   var STILL = 0.004;         // under this speed everywhere, the water counts as still
-  var STILL_STEPS = 12;      // for this many steps running, before it sleeps
+  var STILL_STEPS = 12;      // for this many steps running, before it rests
+
+  /* The water's own weather, for when the cursor leaves it alone. */
+  var FIRST = 0.9;           // the first drop, after the page opens
+  var IDLE_AFTER = 2;        // seconds of a still cursor before the weather is back in full
+  var EASE = 0.8;            // seconds for the weather to rise or quieten
+  var IN_PLAY = 0.2;         // how much of it goes on while the cursor is moving
+  var RATE = 0.9;            // things that happen a second, on a 1440 by 900 window
+  var GAP = 0.45;            // and never sooner than this after the last
+  var LULL = 3;              // and, left alone, never longer than this
+  var EDGE = 0.08;           // the share of the window at each edge where nothing starts
+  var DROP = 14;             // a drop's push
+  var DROP_SPREAD = 26;      // and its width (sigma), px
+  var PATTER = 4;            // drops in a patter of rain, give or take
+  var PATTER_TIME = 1;       // spread over this long
+  var PATTER_REACH = 150;    // and this far around, px
+  var TWIN = 220;            // how far apart two drops fall together, px
+  var GLIDE_TIME = 2.4;      // how long the unseen finger takes
+  var GLIDE_LENGTH = 0.45;   // and how far it goes, as a share of the window's diagonal
+  var GLIDE_PUSH = 0.7;      // and how hard it pushes, against the cursor
+  var MIX = [0.45, 0.2, 0.15, 0.2]; // drop, patter, twin, glide
 
   if (!window.requestAnimationFrame || !window.Float32Array) return;
   var calm = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -84,6 +109,7 @@
   var h, v, vn, drag;
   var subs = 1, dt = STEP, C2 = 0, K = SPRING * SPRING, NU = 0;
   var spread = 1, reach = 1, weights = null;
+  var dropWeights = new Float32Array(2 * Math.ceil(4 * DROP_SPREAD / CELL) + 3);
 
   /* The diamonds: where each sits, and the water cell beneath it. */
   var count = 0, dotX, dotY, dotAt;
@@ -98,13 +124,16 @@
     var c = Math.max(4, Math.round(r.width / size));
     var n = Math.max(4, Math.round(r.height / size));
     var bw = Math.round(r.width * ratio), bh = Math.round(r.height * ratio);
-    if (c === cols && n === rows && ratio === dpr && bw === canvas.width && bh === canvas.height) return;
-    dpr = ratio;
-    cellX = r.width / c; cellY = r.height / n; cell = (cellX + cellY) / 2;
-    pitch = cell * STRIDE;
-    canvas.width = bw; canvas.height = bh;
-    build(c, n);
-    if (raf) draw(); else blank();
+    if (c !== cols || n !== rows || ratio !== dpr || bw !== canvas.width || bh !== canvas.height) {
+      dpr = ratio;
+      cellX = r.width / c; cellY = r.height / n; cell = (cellX + cellY) / 2;
+      pitch = cell * STRIDE;
+      canvas.width = bw; canvas.height = bh;
+      shown = false;
+      build(c, n);
+      if (raf) draw();
+    }
+    wake();
   }
 
   function build(c, n) {
@@ -153,11 +182,14 @@
     }
   }
 
-  /* ---------- The cursor ---------- */
+  /* ---------- Stirring ----------
+     The cursor and the unseen finger stir the water the same way. */
 
-  var pointer = { x: 0, y: 0, on: false, down: false };
-  var was = false, fromX = 0, fromY = 0, lastX = 0, lastY = 0;
-  var speed = 0, force = 0, dirX = 1, dirY = 0;
+  function stirrer() {
+    return { x: 0, y: 0, on: false, down: false, was: false, fromX: 0, fromY: 0, toX: 0, toY: 0,
+      lastX: 0, lastY: 0, speed: 0, force: 0, before: 0, dirX: 1, dirY: 0 };
+  }
+  var pointer = stirrer(), ghost = stirrer();
   var SMOOTH = 1 - Math.exp(-STEP / 0.06);
 
   /* Press the water at (cx, cy), in cells, with a Gaussian of pressure. */
@@ -175,41 +207,179 @@
     }
   }
 
+  /* Where a stirrer goes this step and how hard it pushes: like a finger
+     drawn through water, only while it moves, as hard as it is fast
+     (harder held down). Returns whether anything about it changed. */
+  function aim(s, gain) {
+    var a = 0;
+    s.toX = s.fromX; s.toY = s.fromY;
+    if (s.on) {
+      s.toX = PAD + s.x / cellX - 0.5;
+      s.toY = PAD + s.y / cellY - 0.5;
+      if (!s.was) { s.lastX = s.x; s.lastY = s.y; s.fromX = s.toX; s.fromY = s.toY; s.speed = 0; }
+      var dx = s.x - s.lastX, dy = s.y - s.lastY;
+      s.lastX = s.x; s.lastY = s.y;
+      s.speed += (Math.sqrt(dx * dx + dy * dy) / STEP - s.speed) * SMOOTH;
+      if (s.speed < 1) s.speed = 0;
+      a = WAKE * Math.min(1, s.speed / WAKE_SPEED) * (s.down ? PRESS : 1) * gain;
+    } else {
+      s.speed = 0;
+    }
+    /* Which way it is heading, smoothed, for the water it heaps ahead. */
+    var mx = s.toX - s.fromX, my = s.toY - s.fromY, ml = Math.sqrt(mx * mx + my * my);
+    if (ml > 1e-3) {
+      s.dirX += (mx / ml - s.dirX) * 0.4; s.dirY += (my / ml - s.dirY) * 0.4;
+      var dl = Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY) || 1;
+      s.dirX /= dl; s.dirY /= dl;
+    }
+    var changed = s.was !== s.on || s.toX !== s.fromX || s.toY !== s.fromY;
+    s.was = s.on;
+    s.before = s.force;
+    s.force = a;
+    return changed || s.force !== s.before;
+  }
+
+  /* A finger drawn through water leaves a hollow behind it and heaps the
+     water up ahead; f is how far through the step this substep falls. */
+  function push(s, f) {
+    if (!(s.force > 0 || s.before > 0)) return;
+    var p = (s.before + (s.force - s.before) * f) * PUSH * dt;
+    if (!(p > 0)) return;
+    var px = s.fromX + (s.toX - s.fromX) * f, py = s.fromY + (s.toY - s.fromY) * f, lead = spread * LEAD;
+    press(px - s.dirX * lead, py - s.dirY * lead, p);
+    press(px + s.dirX * lead, py + s.dirY * lead, -p * BOW);
+  }
+
+  /* A drop: a sudden push down at (px, py), in window pixels, over a
+     Gaussian of the given width. */
+  function strike(px, py, width, amount) {
+    var cx = PAD + px / cellX - 0.5, cy = PAD + py / cellY - 0.5;
+    var s = Math.min(width, 1.3 * DROP_SPREAD) / cell, r = Math.ceil(s * 3), k = 1 / (2 * s * s);
+    if (dropWeights.length < 2 * r + 3) dropWeights = new Float32Array(2 * r + 3);
+    var x0 = Math.max(1, Math.ceil(cx - r)), x1 = Math.min(W - 2, Math.floor(cx + r));
+    var y0 = Math.max(1, Math.ceil(cy - r)), y1 = Math.min(H - 2, Math.floor(cy + r));
+    var x, y, d;
+    for (x = x0; x <= x1; x++) { d = x - cx; dropWeights[x - x0] = Math.exp(-d * d * k); }
+    for (y = y0; y <= y1; y++) {
+      d = y - cy;
+      var wy = Math.exp(-d * d * k) * amount;
+      if (wy < 1e-6) continue;
+      var i = y * W + x0;
+      for (x = x0; x <= x1; x++, i++) v[i] -= wy * dropWeights[x - x0];
+    }
+  }
+
+  /* ---------- The weather ----------
+     Things happen at random, about RATE a second when the cursor has
+     been still a while, and less while it is in play. */
+
+  var clock = 0, weather = 1, stirredAt = -1e9, lastAt = 0, begun = false;
+  var falling = [];          // drops still to fall: time, x, y, width, push
+  var path = null;           // the unseen finger's way: when, how long, four points
+
+  var vary = function (x) { return x * (2 / 3 + Math.random() * 2 / 3); };
+  var wide = function () { return cols * cellX; };
+  var tall = function () { return rows * cellY; };
+  var area = function () { return Math.min(1.6, Math.max(0.5, wide() * tall() / (1440 * 900))); };
+
+  /* Somewhere on the window, away from its edges. */
+  function spot() {
+    return [wide() * (EDGE + (1 - 2 * EDGE) * Math.random()), tall() * (EDGE + (1 - 2 * EDGE) * Math.random())];
+  }
+
+  function fall(at, x, y, width, amount) { falling.push([at, x, y, width, amount]); }
+
+  /* The unseen finger: a slow arc from p to somewhere a fair way off,
+     bowed to one side or into a gentle S. */
+  function glide(p) {
+    var want = vary(GLIDE_LENGTH) * Math.sqrt(wide() * wide() + tall() * tall());
+    var q = spot(), miss = Infinity;
+    for (var k = 0; k < 8; k++) {
+      var c = spot(), off = Math.abs(Math.hypot(c[0] - p[0], c[1] - p[1]) - want);
+      if (off < miss) { q = c; miss = off; }
+    }
+    var dx = q[0] - p[0], dy = q[1] - p[1];
+    var b1 = (Math.random() - 0.5) * 0.7, b2 = (Math.random() - 0.5) * 0.7;
+    path = { at: clock, time: vary(GLIDE_TIME), pts: [
+      p[0], p[1],
+      p[0] + dx / 3 - dy * b1, p[1] + dy / 3 + dx * b1,
+      p[0] + 2 * dx / 3 - dy * b2, p[1] + 2 * dy / 3 + dx * b2,
+      q[0], q[1]] };
+  }
+
+  /* Something happens: a drop, a patter of rain, two drops at once, or
+     the unseen finger, if it is not already out. */
+  function happen() {
+    var p = spot(), r = Math.random(), k;
+    lastAt = clock;
+    if (r < MIX[0]) {
+      fall(clock, p[0], p[1], vary(DROP_SPREAD), vary(DROP));
+    } else if (r < MIX[0] + MIX[1]) {
+      var n = PATTER - 1 + Math.floor(Math.random() * 4);
+      for (k = 0; k < n; k++) {
+        var a = Math.random() * 2 * Math.PI, d = PATTER_REACH * Math.sqrt(Math.random());
+        fall(clock + Math.random() * PATTER_TIME, p[0] + d * Math.cos(a), p[1] + d * Math.sin(a),
+          vary(0.75 * DROP_SPREAD), vary(0.55 * DROP));
+      }
+    } else if (r < MIX[0] + MIX[1] + MIX[2]) {
+      var t = Math.random() * Math.PI, half = vary(TWIN) / 2, cx = half * Math.cos(t), cy = half * Math.sin(t);
+      fall(clock, p[0] + cx, p[1] + cy, DROP_SPREAD, 0.8 * DROP);
+      fall(clock, p[0] - cx, p[1] - cy, DROP_SPREAD, 0.8 * DROP);
+    } else if (!path) {
+      glide(p);
+    } else {
+      fall(clock, p[0], p[1], vary(DROP_SPREAD), vary(DROP));
+    }
+  }
+
+  /* The weather for one step: it rises when the cursor has been still a
+     while and quietens while it plays; what is due happens, drops that
+     are due fall, and the unseen finger moves on along its way. Returns
+     whether anything struck the water. */
+  function forecast() {
+    var goal = clock - stirredAt < IDLE_AFTER ? IN_PLAY : 1;
+    weather += (goal - weather) * (1 - Math.exp(-STEP / EASE));
+    if (!begun) {
+      if (clock >= FIRST) { begun = true; happen(); }
+    } else if (clock - lastAt >= GAP &&
+        (Math.random() < RATE * area() * weather * STEP || weather > 0.9 && clock - lastAt >= LULL)) {
+      happen();
+    }
+    var struck = false;
+    for (var k = falling.length - 1; k >= 0; k--) {
+      var f = falling[k];
+      if (f[0] > clock) continue;
+      strike(f[1], f[2], f[3], f[4]);
+      falling.splice(k, 1);
+      struck = true;
+    }
+    if (path) {
+      var u = (clock - path.at) / path.time;
+      if (u >= 1) {
+        path = null;
+        ghost.on = false;
+      } else {
+        var e = u * u * (3 - 2 * u), o = 1 - e, P = path.pts;
+        var b0 = o * o * o, b1 = 3 * o * o * e, b2 = 3 * o * e * e, b3 = e * e * e;
+        ghost.x = b0 * P[0] + b1 * P[2] + b2 * P[4] + b3 * P[6];
+        ghost.y = b0 * P[1] + b1 * P[3] + b2 * P[5] + b3 * P[7];
+        ghost.on = true;
+      }
+    }
+    return struck;
+  }
+
   /* ---------- The step ---------- */
 
   var quiet = 0;
 
   function step() {
-    /* Like a finger drawn through water, the cursor only pushes while
-       it moves, as hard as it is fast (harder held down); stopped, it
-       leaves the water to settle. */
-    var aim = 0, toX = fromX, toY = fromY;
-    if (pointer.on) {
-      toX = PAD + pointer.x / cellX - 0.5;
-      toY = PAD + pointer.y / cellY - 0.5;
-      if (!was) { lastX = pointer.x; lastY = pointer.y; fromX = toX; fromY = toY; speed = 0; }
-      var dx = pointer.x - lastX, dy = pointer.y - lastY;
-      lastX = pointer.x; lastY = pointer.y;
-      speed += (Math.sqrt(dx * dx + dy * dy) / STEP - speed) * SMOOTH;
-      if (speed < 1) speed = 0;
-      aim = WAKE * Math.min(1, speed / WAKE_SPEED) * (pointer.down ? PRESS : 1);
-    } else {
-      speed = 0;
-    }
-    /* Which way it is heading, smoothed, for the water it heaps ahead. */
-    var mx = toX - fromX, my = toY - fromY, ml = Math.sqrt(mx * mx + my * my);
-    if (ml > 1e-3) {
-      dirX += (mx / ml - dirX) * 0.4; dirY += (my / ml - dirY) * 0.4;
-      var dl = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
-      dirX /= dl; dirY /= dl;
-    }
-    var moving = was !== pointer.on || toX !== fromX || toY !== fromY;
-    was = pointer.on;
-    var before = force;
-    force = aim;
-    if (force !== before) moving = true;
+    clock += STEP;
+    var struck = forecast();
+    var a = aim(pointer, 1), b = aim(ghost, GLIDE_PUSH * weather);
+    var moving = a || b || struck;
 
-    var y, x, i, a, hc, vc, peak = 0;
+    var y, x, i, acc, hc, vc, peak = 0;
     for (var s = 1; s <= subs; s++) {
       /* Each cell's acceleration: the pull of its neighbours (the
          wave), the spring back to rest, drag, and a viscous drag that
@@ -218,23 +388,15 @@
         i = y * W + 1;
         for (x = 1; x < W - 1; x++, i++) {
           hc = h[i]; vc = v[i];
-          a = C2 * (h[i - 1] + h[i + 1] + h[i - W] + h[i + W] - 4 * hc) +
-              NU * (v[i - 1] + v[i + 1] + v[i - W] + v[i + W] - 4 * vc) -
-              K * hc - drag[i] * vc;
-          vn[i] = vc + a * dt;
+          acc = C2 * (h[i - 1] + h[i + 1] + h[i - W] + h[i + W] - 4 * hc) +
+                NU * (v[i - 1] + v[i + 1] + v[i - W] + v[i + W] - 4 * vc) -
+                K * hc - drag[i] * vc;
+          vn[i] = vc + acc * dt;
         }
       }
-      /* A finger drawn through water leaves a hollow behind it and
-         heaps the water up ahead. */
-      if (force > 0 || before > 0) {
-        var f = s / subs;
-        var p = (before + (force - before) * f) * PUSH * dt;
-        if (p > 0) {
-          var px = fromX + (toX - fromX) * f, py = fromY + (toY - fromY) * f, lead = spread * LEAD;
-          press(px - dirX * lead, py - dirY * lead, p);
-          press(px + dirX * lead, py + dirY * lead, -p * BOW);
-        }
-      }
+      var f = s / subs;
+      push(pointer, f);
+      push(ghost, f);
       var last = s === subs;
       for (y = 1; y < H - 1; y++) {
         i = y * W + 1;
@@ -246,7 +408,8 @@
       }
       var t = v; v = vn; vn = t;
     }
-    fromX = toX; fromY = toY;
+    pointer.fromX = pointer.toX; pointer.fromY = pointer.toY;
+    ghost.fromX = ghost.toX; ghost.fromY = ghost.toY;
     quiet = !moving && peak < STILL ? quiet + 1 : 0;
   }
 
@@ -255,9 +418,13 @@
      swells with it, and leans a little with the slope. Diamonds of one
      size are gathered into one shape and filled at once. */
 
+  var shown = false;
+
   function blank() {
+    if (!shown) return;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    shown = false;
   }
 
   function draw() {
@@ -299,19 +466,38 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    shown = true;
   }
 
   /* ---------- The loop ----------
      Steps are a fixed sixtieth of a second, as many as the time since
-     the last frame calls for. Still water is cleared away and left. */
+     the last frame calls for. Once the water is still, the loop rests
+     until the next thing is due to happen, as a Poisson process would
+     have it, and the clock is moved on by the time it rested. */
 
-  var raf = 0, then = 0, spare = 0;
+  var raf = 0, then = 0, spare = 0, nap = 0;
 
   function wake() {
     if (still || raf || document.hidden || !N) return;
+    clearTimeout(nap);
+    nap = 0;
     quiet = 0;
     then = performance.now();
     raf = requestAnimationFrame(frame);
+  }
+
+  function rest() {
+    var rate = RATE * area() * weather;
+    var wait = Math.max(0, !begun ? FIRST - clock : Math.max(GAP - (clock - lastAt), -Math.log(1 - Math.random()) / rate));
+    if (weather > 0.9) wait = Math.min(wait, Math.max(0, LULL - (clock - lastAt)));
+    if (!isFinite(wait)) return;
+    nap = setTimeout(function () {
+      nap = 0;
+      clock += wait;
+      begun = true;
+      happen();
+      wake();
+    }, wait * 1000);
   }
 
   function frame(now) {
@@ -322,9 +508,20 @@
     spare += t;
     if (spare > MAX_STEPS * STEP) spare = MAX_STEPS * STEP;
     while (spare >= STEP) { step(); spare -= STEP; }
-    if (quiet >= STILL_STEPS) { blank(); return; }
+    if (quiet >= STILL_STEPS && !path && !falling.length) {
+      blank();
+      rest();
+      return;
+    }
     draw();
     raf = requestAnimationFrame(frame);
+  }
+
+  function halt() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    clearTimeout(nap);
+    nap = 0;
   }
 
   /* ---------- Listening ---------- */
@@ -335,6 +532,7 @@
     if (!e.isPrimary || (e.pointerType === 'touch' && !pointer.down)) return;
     pointer.x = e.clientX; pointer.y = e.clientY;
     pointer.on = true;
+    stirredAt = clock;
     wake();
   }, passive);
 
@@ -344,6 +542,7 @@
     pointer.x = e.clientX; pointer.y = e.clientY;
     pointer.down = e.pointerType === 'touch' || e.button === 0;
     pointer.on = true;
+    stirredAt = clock;
     wake();
   }, passive);
 
@@ -362,9 +561,8 @@
   window.addEventListener('blur', release);
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { wake(); return; }
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
+    if (document.hidden) halt();
+    else wake();
   });
 
   var sizing = 0;
@@ -376,12 +574,12 @@
 
   listen(window.matchMedia('(prefers-color-scheme: dark)'), function () { tint(); if (raf) draw(); });
 
-  /* Asking for less motion part way through clears the water away. */
+  /* Asking for less motion part way through clears the water away;
+     asking for it back lets the weather return. */
   if (calm) listen(calm, function () {
     still = calm.matches;
-    if (!still) return;
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
+    if (!still) { wake(); return; }
+    halt();
     pointer.on = false;
     blank();
   });
